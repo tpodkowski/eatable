@@ -15,7 +15,6 @@ services:
     build: 
       context: .
       dockerfile: dockerfile.prod
-    image: node:20-alpine
     working_dir: /app
     command: sh -c "yarn install --production && yarn run start"
     volumes:

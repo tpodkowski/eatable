@@ -3,12 +3,11 @@ FROM node:20-bullseye-slim AS builder
 
 WORKDIR /app
 
-RUN corepack enable
-RUN corepack prepare yarn@stable --activate
+RUN apt-get update && apt-get install -y python3 g++ make && rm -rf /var/lib/apt/lists/*
 
 COPY package.json yarn.lock ./
 
-RUN yarn install
+RUN yarn install --immutable --immutable-cache
 
 COPY . .
 

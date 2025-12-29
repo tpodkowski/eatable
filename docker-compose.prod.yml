@@ -3,31 +3,31 @@ services:
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       POSTGRES_DB : ${DATABASE_NAME} 
-      POSTGRRES_USER:  ${DATABASE_USER} 
+      POSTGRES_USER:  ${DATABASE_USER} 
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD} 
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgrejsjql/data
-
+      - postgres_data:/var/lib/postgresql/data
+ 
   api:
     image: node:20-alpine
     working_dir: /app
-    command: sh -c "yarn install && yarn run start:dev"
+    command: sh -c "yarn install --production && yarn run start"
     volumes:
       - .:/app
       - /app/node_modules
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - .env
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
-      DATABASE_NAME: ${DATABASE_NAME} 
-      DATABASE_USER: ${DATABASE_USER} 
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD} 
-      JWT_SECRET: ${JWT_SECRET}
       NODE_ENV: production 
     depends_on:
       - postgres

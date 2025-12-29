@@ -17,8 +17,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: List files
-        run: ls -la
+      - name: Create env
+        run: echo "${{ secrets.ENV_PROD }}" > .env
 
       - name: Pull images
         run: |

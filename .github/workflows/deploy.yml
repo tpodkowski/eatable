@@ -17,15 +17,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create .env
+      - name: Create env
         run: |
-          echo "DATABASE_NAME=${{ secrets.DATABASE_NAME }}" > .env
-          echo "DATABASE_USER=${{ secrets.DATABASE_USER }}" >> .env
-          echo "DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}" >> .env
-          echo "DATABASE_HOST=postgres" >> .env
-          echo "DATABASE_PORT=5432" >> .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-          echo "NODE_ENV=production" >> .env
+          printf "DATABASE_NAME=%s\nDATABASE_USER=%s\nDATABASE_PASSWORD=%s\nDATABASE_HOST=postgres\nDATABASE_PORT=5432\nJWT_SECRET=%s\nNODE_ENV=production\n" \
+          "${{ secrets.DATABASE_NAME }}" \
+          "${{ secrets.DATABASE_USER }}" \
+          "${{ secrets.DATABASE_PASSWORD }}" \
+          "${{ secrets.JWT_SECRET }}" \
+          > .env
+
+      - name: Check .env
+        run: cat .env | sed 's/=.*/=***/'
 
       - name: Pull images
         run: |

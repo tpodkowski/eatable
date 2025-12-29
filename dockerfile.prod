@@ -8,8 +8,7 @@ RUN corepack prepare yarn@stable --activate
 
 COPY package.json yarn.lock ./
 
-# RUN yarn install --production
-RUN yarn workspaces focus --production --all
+RUN yarn install
 
 COPY . .
 

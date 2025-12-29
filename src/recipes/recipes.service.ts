@@ -48,6 +48,7 @@ export class RecipesService {
   }
 
   remove(id: number) {
-    return this.recipesRepo.remove(id);
+    // return this.recipesRepo.remove(id);
+    return `Remove ${id}`;
   }
 }

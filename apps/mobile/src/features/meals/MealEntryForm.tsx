@@ -19,6 +19,9 @@ export function MealEntryForm({ onSave, onCancel }: MealEntryFormProps) {
   const [quantity, setQuantity] = useState("");
   const [notes, setNotes] = useState("");
   const [calories, setCalories] = useState("");
+  const [protein, setProtein] = useState("");
+  const [carbohydrates, setCarbohydrates] = useState("");
+  const [fat, setFat] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +30,17 @@ export function MealEntryForm({ onSave, onCancel }: MealEntryFormProps) {
     if (calorieValue !== undefined && (!Number.isInteger(calorieValue) || calorieValue < 0 || calorieValue > 100_000)) {
       setError("errors.invalidCalories");
       return;
+    }
+    const macroInputs = { protein, carbohydrates, fat };
+    const macroValues: Partial<Record<keyof typeof macroInputs, number>> = {};
+    for (const [name, raw] of Object.entries(macroInputs)) {
+      if (!raw.trim()) continue;
+      const value = Number(raw);
+      if (!Number.isInteger(value) || value < 0 || value > 100_000) {
+        setError("errors.invalidMacro");
+        return;
+      }
+      macroValues[name as keyof typeof macroInputs] = value;
     }
 
     setIsSaving(true);
@@ -39,6 +53,7 @@ export function MealEntryForm({ onSave, onCancel }: MealEntryFormProps) {
         ...(quantity.trim() ? { quantity: quantity.trim() } : {}),
         ...(notes.trim() ? { notes: notes.trim() } : {}),
         ...(calorieValue === undefined ? {} : { calories: calorieValue }),
+        ...macroValues,
       });
       saved = true;
     } catch {
@@ -105,6 +120,11 @@ export function MealEntryForm({ onSave, onCancel }: MealEntryFormProps) {
         style={styles.input}
         value={calories}
       />
+      <View style={styles.macroInputs}>
+        {([ ["protein", protein, setProtein], ["carbohydrates", carbohydrates, setCarbohydrates], ["fat", fat, setFat] ] as const).map(([name, value, setValue]) => (
+          <TextInput key={name} accessibilityLabel={t(`planner.${name}`)} keyboardType="number-pad" maxLength={6} onChangeText={setValue} placeholder={t(`planner.${name}Short`)} placeholderTextColor={colors.placeholder} style={[styles.input, styles.macroInput]} value={value} />
+        ))}
+      </View>
       {error ? <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text> : null}
       <ActionButton
         title={t("planner.saveEntry")}
@@ -129,6 +149,8 @@ function createStyles(colors: { border: string; danger: string; muted: string; p
     typeText: { color: colors.muted, fontSize: 13, fontWeight: "600" },
     typeTextActive: { color: colors.primary },
     input: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.text, fontSize: 15, height: 52, paddingHorizontal: 14 },
+    macroInputs: { flexDirection: "row", gap: 8 },
+    macroInput: { flex: 1, paddingHorizontal: 8, textAlign: "center" },
     notesInput: { height: 80, paddingTop: 14, textAlignVertical: "top" },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19 },
     cancelButton: { alignSelf: "center", padding: 8 },

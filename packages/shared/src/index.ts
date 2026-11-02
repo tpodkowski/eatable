@@ -11,6 +11,9 @@ export interface MealEntry {
   quantity: string | null;
   notes: string | null;
   calories: number | null;
+  protein: number | null;
+  carbohydrates: number | null;
+  fat: number | null;
   createdAt: string;
 }
 
@@ -21,12 +24,16 @@ export interface CreateMealEntryInput {
   quantity?: string;
   notes?: string;
   calories?: number;
+  protein?: number;
+  carbohydrates?: number;
+  fat?: number;
 }
 
 export interface DailyMealType {
   id: string;
   name: string;
   sortOrder: number;
+  mealTime: string;
   entries: MealEntry[];
 }
 

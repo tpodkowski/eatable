@@ -1,3 +1,3 @@
-import { DailyPlanScreen } from "../../features/meals/DailyPlanScreen";
+import { DashboardScreen } from "../../features/dashboard/DashboardScreen";
 
-export default DailyPlanScreen;
+export default DashboardScreen;

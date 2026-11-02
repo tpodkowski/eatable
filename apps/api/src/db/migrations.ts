@@ -2,6 +2,8 @@ import type { Pool } from "pg";
 
 const APP_MIGRATION_ID = "2026-11-02-user-meals";
 const MEAL_ENTRY_DETAILS_MIGRATION_ID = "2026-11-02-meal-entry-details";
+const MEAL_ENTRY_MACROS_MIGRATION_ID = "2026-11-02-meal-entry-macros";
+const MEAL_TYPE_TIMES_MIGRATION_ID = "2026-11-02-meal-type-times";
 
 const createMealTables = `
 CREATE TABLE user_meal_settings (
@@ -45,6 +47,12 @@ ALTER TABLE meal_entries
   ADD COLUMN item_type text NOT NULL DEFAULT 'dish' CHECK (item_type IN ('dish', 'product')),
   ADD COLUMN quantity text CHECK (quantity IS NULL OR char_length(quantity) BETWEEN 1 AND 60);
 `;
+const addMealEntryMacros = `
+ALTER TABLE meal_entries
+  ADD COLUMN protein integer CHECK (protein IS NULL OR protein >= 0),
+  ADD COLUMN carbohydrates integer CHECK (carbohydrates IS NULL OR carbohydrates >= 0),
+  ADD COLUMN fat integer CHECK (fat IS NULL OR fat >= 0);
+`;
 
 export async function runAppMigrations(pool: Pool) {
   const client = await pool.connect();
@@ -68,6 +76,30 @@ export async function runAppMigrations(pool: Pool) {
     if (detailsMigration.rowCount === 0) {
       await client.query(addMealEntryDetails);
       await client.query("INSERT INTO app_migrations (id) VALUES ($1)", [MEAL_ENTRY_DETAILS_MIGRATION_ID]);
+    }
+
+    const macrosMigration = await client.query("SELECT 1 FROM app_migrations WHERE id = $1", [MEAL_ENTRY_MACROS_MIGRATION_ID]);
+    if (macrosMigration.rowCount === 0) {
+      await client.query(addMealEntryMacros);
+      await client.query("INSERT INTO app_migrations (id) VALUES ($1)", [MEAL_ENTRY_MACROS_MIGRATION_ID]);
+    }
+
+    const mealTimesMigration = await client.query("SELECT 1 FROM app_migrations WHERE id = $1", [MEAL_TYPE_TIMES_MIGRATION_ID]);
+    if (mealTimesMigration.rowCount === 0) {
+      await client.query(`
+        ALTER TABLE user_meal_types ADD COLUMN meal_time time;
+        UPDATE user_meal_types
+        SET meal_time = CASE sort_order
+          WHEN 0 THEN '08:00'::time
+          WHEN 1 THEN '11:00'::time
+          WHEN 2 THEN '14:00'::time
+          WHEN 3 THEN '17:00'::time
+          WHEN 4 THEN '20:00'::time
+          ELSE '08:00'::time
+        END;
+        ALTER TABLE user_meal_types ALTER COLUMN meal_time SET NOT NULL;
+      `);
+      await client.query("INSERT INTO app_migrations (id) VALUES ($1)", [MEAL_TYPE_TIMES_MIGRATION_ID]);
     }
 
     await client.query("COMMIT");

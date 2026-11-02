@@ -10,10 +10,10 @@ async function seedDefaultMealTypes(client: PoolClient, userId: string) {
       "SELECT defaults_seeded_at FROM user_meal_settings WHERE user_id = $1 FOR UPDATE", [userId],
     );
     if (settings.rows[0]?.defaults_seeded_at === null) {
-      for (const [sortOrder, name] of defaultMealTypes.entries()) {
+      for (const [sortOrder, { name, mealTime }] of defaultMealTypes.entries()) {
         await client.query(
-          "INSERT INTO user_meal_types (user_id, name, sort_order) VALUES ($1, $2, $3) ON CONFLICT (user_id, name) DO NOTHING",
-          [userId, name, sortOrder],
+          "INSERT INTO user_meal_types (user_id, name, sort_order, meal_time) VALUES ($1, $2, $3, $4::time) ON CONFLICT (user_id, name) DO NOTHING",
+          [userId, name, sortOrder, mealTime],
         );
       }
       await client.query("UPDATE user_meal_settings SET defaults_seeded_at = now() WHERE user_id = $1", [userId]);
@@ -35,9 +35,11 @@ export async function getDailyMeals(pool: Pool, userId: string, date: string): P
 
   const meals = await pool.query<DailyMealsResponse["mealTypes"][number]>(
     `SELECT meal_type.id, meal_type.name, meal_type.sort_order AS "sortOrder",
+       to_char(meal_type.meal_time, 'HH24:MI') AS "mealTime",
        COALESCE(json_agg(json_build_object(
          'id', entry.id, 'type', entry.item_type, 'title', entry.title, 'quantity', entry.quantity,
-         'notes', entry.notes, 'calories', entry.calories, 'createdAt', entry.created_at
+         'notes', entry.notes, 'calories', entry.calories, 'protein', entry.protein,
+         'carbohydrates', entry.carbohydrates, 'fat', entry.fat, 'createdAt', entry.created_at
        ) ORDER BY entry.created_at) FILTER (WHERE entry.id IS NOT NULL), '[]'::json) AS entries
      FROM user_meal_types AS meal_type
      LEFT JOIN meal_entries AS entry ON entry.user_id = meal_type.user_id
@@ -53,14 +55,14 @@ export async function createMealEntry(
   pool: Pool,
   userId: string,
   mealTypeId: string,
-  data: { date: string; type: MealEntry["type"]; title: string; quantity: string | null; notes: string | null; calories: number | null },
+  data: { date: string; type: MealEntry["type"]; title: string; quantity: string | null; notes: string | null; calories: number | null; protein: number | null; carbohydrates: number | null; fat: number | null },
 ): Promise<MealEntry | null> {
   const result = await pool.query<MealEntry>(
-    `INSERT INTO meal_entries (user_id, meal_type_id, meal_date, item_type, title, quantity, notes, calories)
-     SELECT $1, meal_type.id, $3::date, $4, $5, $6, $7, $8
+    `INSERT INTO meal_entries (user_id, meal_type_id, meal_date, item_type, title, quantity, notes, calories, protein, carbohydrates, fat)
+     SELECT $1, meal_type.id, $3::date, $4, $5, $6, $7, $8, $9, $10, $11
      FROM user_meal_types AS meal_type WHERE meal_type.user_id = $1 AND meal_type.id = $2
-     RETURNING id, item_type AS type, title, quantity, notes, calories, created_at AS "createdAt"`,
-    [userId, mealTypeId, data.date, data.type, data.title, data.quantity, data.notes, data.calories],
+     RETURNING id, item_type AS type, title, quantity, notes, calories, protein, carbohydrates, fat, created_at AS "createdAt"`,
+    [userId, mealTypeId, data.date, data.type, data.title, data.quantity, data.notes, data.calories, data.protein, data.carbohydrates, data.fat],
   );
   return result.rows[0] ?? null;
 }

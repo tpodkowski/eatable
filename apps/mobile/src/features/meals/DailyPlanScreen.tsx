@@ -5,6 +5,7 @@ import { ActivityIndicator, Animated, PanResponder, Pressable, StyleSheet, Text,
 import { AppScreen } from "../../components/AppScreen";
 import { authClient } from "../../lib/auth-client";
 import { formatDate, localDateKey, shiftDate } from "../../lib/dates";
+import { getInitials } from "../../lib/initials";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { MealCard } from "./MealCard";
 import { AddMealEntryModal } from "./AddMealEntryModal";
@@ -77,14 +78,16 @@ export function DailyPlanScreen() {
       </Pressable>
     )}>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>EATABLE</Text>
+        <Pressable accessibilityLabel={t("app.goToDashboard")} accessibilityRole="button" onPress={() => router.replace("/")}>
+          <Text style={styles.eyebrow}>EATABLE</Text>
+        </Pressable>
         <Pressable
           accessibilityLabel={t("app.openSettings")}
           accessibilityRole="button"
           onPress={() => router.push("/settings")}
           style={styles.avatarButton}
         >
-          <Text style={styles.avatarText}>{getInitials(session?.user.name || session?.user.email || "User")}</Text>
+          <Text style={styles.avatarText}>{getInitials(session?.user.name || session?.user.email || "")}</Text>
         </Pressable>
       </View>
 
@@ -123,9 +126,12 @@ export function DailyPlanScreen() {
       ) : error ? (
         <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text>
       ) : (
+        <>
+        {dailyMeals ? <DailyNutritionSummary mealTypes={dailyMeals.mealTypes} styles={styles} t={t} /> : null}
         <View style={styles.mealList}>
           {dailyMeals?.mealTypes.map((mealType) => <MealCard key={mealType.id} mealType={mealType} />)}
         </View>
+        </>
       )}
       </Animated.View>
       </View>
@@ -152,11 +158,16 @@ export function DailyPlanScreen() {
   );
 }
 
-function getInitials(name: string) {
-  const parts = name.trim().split(/[\s._-]+/).filter(Boolean);
-  return (parts.length > 1
-    ? `${parts[0][0]}${parts[1][0]}`
-    : parts[0]?.slice(0, 2) ?? "U").toLocaleUpperCase("pl-PL");
+function DailyNutritionSummary({ mealTypes, styles, t }: { mealTypes: NonNullable<ReturnType<typeof useDailyMeals>["dailyMeals"]>["mealTypes"]; styles: ReturnType<typeof createStyles>; t: (key: string) => string }) {
+  const entries = mealTypes.flatMap((mealType) => mealType.entries);
+  const total = (key: "calories" | "protein" | "carbohydrates" | "fat") => entries.reduce((sum, entry) => sum + (entry[key] ?? 0), 0);
+  return (
+    <View style={styles.summary}>
+      <Text style={styles.summaryTitle}>{t("planner.dayTotal")}</Text>
+      <Text style={styles.summaryCalories}>{total("calories")} kcal</Text>
+      <Text style={styles.summaryMacros}>{t("planner.proteinShort")} {total("protein")} g  ·  {t("planner.carbohydratesShort")} {total("carbohydrates")} g  ·  {t("planner.fatShort")} {total("fat")} g</Text>
+    </View>
+  );
 }
 
 function createStyles(colors: { background: string; blue: string; danger: string; muted: string; orange: string; primary: string; surface: string; surfaceAlt: string; text: string; violet: string }) {
@@ -175,6 +186,10 @@ function createStyles(colors: { background: string; blue: string; danger: string
     muted: { color: colors.muted, fontSize: 14 },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19, marginTop: 20 },
     mealList: { gap: 10, marginTop: 18 },
+    summary: { backgroundColor: colors.surface, borderColor: colors.surfaceAlt, borderRadius: 16, borderWidth: 1, marginTop: 16, padding: 16 },
+    summaryTitle: { color: colors.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" },
+    summaryCalories: { color: colors.text, fontSize: 24, fontWeight: "700", marginTop: 5 },
+    summaryMacros: { color: colors.muted, fontSize: 13, marginTop: 7 },
     addButton: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 16, flexDirection: "row", gap: 8, height: 52, justifyContent: "center", width: "100%" },
     addButtonEmoji: { fontSize: 22, lineHeight: 28 },
     addButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },

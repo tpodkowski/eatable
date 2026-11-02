@@ -11,6 +11,9 @@ describe("meal entry input", () => {
       quantity: "  250 g ",
       notes: "  With berries  ",
       calories: 380,
+      protein: 12,
+      carbohydrates: 44,
+      fat: 8,
     });
 
     assert.deepEqual(result, {
@@ -22,6 +25,9 @@ describe("meal entry input", () => {
         quantity: "250 g",
         notes: "With berries",
         calories: 380,
+        protein: 12,
+        carbohydrates: 44,
+        fat: 8,
       },
     });
   });
@@ -44,6 +50,9 @@ describe("meal entry input", () => {
         quantity: null,
         notes: null,
         calories: null,
+        protein: null,
+        carbohydrates: null,
+        fat: null,
       });
     }
   });
@@ -70,5 +79,7 @@ describe("meal entry input", () => {
     assert.equal(validateMealEntryInput({ ...base, notes: "x".repeat(501) }).success, false);
     assert.deepEqual(validateMealEntryInput({ ...base, calories: -1 }), { success: false, error: "invalidCalories" });
     assert.deepEqual(validateMealEntryInput({ ...base, calories: 1.5 }), { success: false, error: "invalidCalories" });
+    assert.deepEqual(validateMealEntryInput({ ...base, protein: -1 }), { success: false, error: "invalidProtein" });
+    assert.deepEqual(validateMealEntryInput({ ...base, carbohydrates: 1.5 }), { success: false, error: "invalidCarbohydrates" });
   });
 });

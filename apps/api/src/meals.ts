@@ -1,9 +1,12 @@
 import type { CreateMealEntryInput, MealEntry } from "@eatable/shared";
 
-export type ValidatedMealEntryInput = Omit<CreateMealEntryInput, "quantity" | "notes" | "calories"> & {
+export type ValidatedMealEntryInput = Omit<CreateMealEntryInput, "quantity" | "notes" | "calories" | "protein" | "carbohydrates" | "fat"> & {
   quantity: string | null;
   notes: string | null;
   calories: number | null;
+  protein: number | null;
+  carbohydrates: number | null;
+  fat: number | null;
 };
 
 export type MealEntryValidation =
@@ -46,6 +49,15 @@ export function validateMealEntryInput(input: unknown): MealEntryValidation {
   if (calories !== null && (!Number.isInteger(calories) || Number(calories) < 0 || Number(calories) > 100_000)) {
     return { success: false, error: "invalidCalories" };
   }
+  const macros = ["protein", "carbohydrates", "fat"] as const;
+  const values: Record<(typeof macros)[number], number | null> = { protein: null, carbohydrates: null, fat: null };
+  for (const macro of macros) {
+    const value = body[macro] === undefined || body[macro] === "" ? null : body[macro];
+    if (value !== null && (!Number.isInteger(value) || Number(value) < 0 || Number(value) > 100_000)) {
+      return { success: false, error: `invalid${macro[0].toUpperCase()}${macro.slice(1)}` };
+    }
+    values[macro] = typeof value === "number" ? value : null;
+  }
 
   return {
     success: true,
@@ -56,6 +68,7 @@ export function validateMealEntryInput(input: unknown): MealEntryValidation {
       quantity: typeof quantity === "string" ? quantity.trim() : null,
       notes: typeof notes === "string" && notes.trim().length > 0 ? notes.trim() : null,
       calories: typeof calories === "number" ? calories : null,
+      ...values,
     },
   };
 }

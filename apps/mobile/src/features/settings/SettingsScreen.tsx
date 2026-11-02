@@ -80,8 +80,8 @@ export function SettingsScreen() {
       <PreferenceOptions
         label={t("language.label")}
         options={[
-          { value: "pl", label: t("language.polish") },
-          { value: "en", label: t("language.english") },
+          { value: "pl", label: t("language.polish"), icon: "🇵🇱" },
+          { value: "en", label: t("language.english"), icon: "🇬🇧" },
         ]}
         selected={language}
         onSelect={(value) => void changeLanguage(value as AppLanguage)}
@@ -90,9 +90,9 @@ export function SettingsScreen() {
       <PreferenceOptions
         label={t("theme.label")}
         options={[
-          { value: "system", label: t("theme.system") },
-          { value: "light", label: t("theme.light") },
-          { value: "dark", label: t("theme.dark") },
+          { value: "system", label: t("theme.system"), icon: "◐" },
+          { value: "light", label: t("theme.light"), icon: "☀️" },
+          { value: "dark", label: t("theme.dark"), icon: "🌙" },
         ]}
         selected={mode}
         onSelect={(value) => void setMode(value as "system" | "light" | "dark")}
@@ -113,7 +113,7 @@ function PreferenceOptions({
   styles,
 }: {
   label: string;
-  options: Array<{ value: string; label: string }>;
+  options: Array<{ value: string; label: string; icon?: string }>;
   selected: string;
   onSelect: (value: string) => void;
   styles: ReturnType<typeof createStyles>;
@@ -132,6 +132,11 @@ function PreferenceOptions({
               onPress={() => onSelect(option.value)}
               style={[styles.preferenceOption, isSelected && styles.preferenceOptionActive]}
             >
+              {option.icon ? (
+                <Text accessibilityElementsHidden style={styles.preferenceOptionIcon}>
+                  {option.icon}
+                </Text>
+              ) : null}
               <Text style={[styles.preferenceOptionText, isSelected && styles.preferenceOptionTextActive]}>
                 {option.label}
               </Text>
@@ -165,8 +170,9 @@ function createStyles(colors: { background: string; border: string; danger: stri
     preferenceSection: { marginTop: 28 },
     preferenceLabel: { color: colors.text, fontSize: 14, fontWeight: "600", marginBottom: 10 },
     preferenceOptions: { flexDirection: "row", gap: 10 },
-    preferenceOption: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 12, borderWidth: 1, flex: 1, minHeight: 46, justifyContent: "center", paddingHorizontal: 12 },
+    preferenceOption: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 12, borderWidth: 1, flex: 1, minHeight: 64, justifyContent: "center", paddingHorizontal: 8, paddingVertical: 8 },
     preferenceOptionActive: { backgroundColor: colors.surfaceAlt, borderColor: colors.primary },
+    preferenceOptionIcon: { color: colors.text, fontSize: 20, lineHeight: 24, marginBottom: 2 },
     preferenceOptionText: { color: colors.muted, fontSize: 14, fontWeight: "600" },
     preferenceOptionTextActive: { color: colors.primary },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19, marginTop: 20 },

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
@@ -18,11 +19,11 @@ const googleSignInEnabled = process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED === "
 
 type AuthMode = "sign-in" | "sign-up";
 
-export function AuthScreen() {
+export function AuthScreen({ mode }: { mode: AuthMode }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [mode, setMode] = useState<AuthMode>("sign-in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,11 +58,6 @@ export function AuthScreen() {
     } finally {
       setBusy(false);
     }
-  }
-
-  function switchMode() {
-    setMessage(null);
-    setMode((current) => current === "sign-in" ? "sign-up" : "sign-in");
   }
 
   return (
@@ -142,7 +138,7 @@ export function AuthScreen() {
       </Pressable>
       {!googleSignInEnabled ? <Text style={styles.hint}>{t("auth.googleHint")}</Text> : null}
 
-      <Pressable accessibilityRole="button" onPress={switchMode} style={styles.switchMode}>
+      <Pressable accessibilityRole="button" onPress={() => router.replace(mode === "sign-in" ? "/(auth)/sign-up" : "/(auth)/sign-in")} style={styles.switchMode}>
         <Text style={styles.switchText}>
           {t(mode === "sign-in" ? "auth.noAccount" : "auth.hasAccount")}
           <Text style={styles.switchAction}>{t(mode === "sign-in" ? "auth.register" : "auth.signIn")}</Text>

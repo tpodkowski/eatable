@@ -3,8 +3,9 @@ import cors from "@fastify/cors";
 import { fromNodeHeaders } from "better-auth/node";
 import type { HealthResponse } from "@eatable/shared";
 import { auth, pool } from "./auth.js";
-import type { DailyMealsResponse } from "@eatable/shared";
+import type { DailyMealsResponse, MealEntry } from "@eatable/shared";
 import { runAppMigrations } from "./db/migrations.js";
+import { isValidMealDate, validateMealEntryInput } from "./meals.js";
 
 const app = fastify({ logger: true });
 const port = Number(process.env.PORT ?? 3000);
@@ -62,12 +63,7 @@ app.get<{ Querystring: { date?: string }; Reply: DailyMealsResponse | { error: s
     if (!session) return reply.status(401).send({ error: "Unauthorized" });
 
     const date = request.query.date ?? new Date().toISOString().slice(0, 10);
-    const dateTimestamp = Date.parse(`${date}T00:00:00.000Z`);
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(date)
-      || !Number.isFinite(dateTimestamp)
-      || new Date(dateTimestamp).toISOString().slice(0, 10) !== date
-    ) {
+    if (!isValidMealDate(date)) {
       return reply.status(400).send({ error: "date must use YYYY-MM-DD format" });
     }
 
@@ -114,7 +110,9 @@ app.get<{ Querystring: { date?: string }; Reply: DailyMealsResponse | { error: s
            json_agg(
              json_build_object(
                'id', entry.id,
+               'type', entry.item_type,
                'title', entry.title,
+               'quantity', entry.quantity,
                'notes', entry.notes,
                'calories', entry.calories,
                'createdAt', entry.created_at
@@ -136,6 +134,35 @@ app.get<{ Querystring: { date?: string }; Reply: DailyMealsResponse | { error: s
     return { date, mealTypes: meals.rows };
   },
 );
+
+app.post<{
+  Params: { mealTypeId: string };
+  Body: unknown;
+  Reply: MealEntry | { error: string };
+}>("/api/meals/:mealTypeId/entries", async (request, reply) => {
+  const session = await auth.api.getSession({ headers: fromNodeHeaders(request.headers) });
+  if (!session) return reply.status(401).send({ error: "Unauthorized" });
+
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(request.params.mealTypeId)) {
+    return reply.status(400).send({ error: "invalidMealTypeId" });
+  }
+
+  const validated = validateMealEntryInput(request.body);
+  if (!validated.success) return reply.status(400).send({ error: validated.error });
+
+  const { date, type, title, quantity, notes, calories } = validated.data;
+  const result = await pool.query<MealEntry>(
+    `INSERT INTO meal_entries (user_id, meal_type_id, meal_date, item_type, title, quantity, notes, calories)
+     SELECT $1, meal_type.id, $3::date, $4, $5, $6, $7, $8
+     FROM user_meal_types AS meal_type
+     WHERE meal_type.user_id = $1 AND meal_type.id = $2
+     RETURNING id, item_type AS type, title, quantity, notes, calories, created_at AS "createdAt"`,
+    [session.user.id, request.params.mealTypeId, date, type, title, quantity, notes, calories],
+  );
+
+  if (result.rowCount === 0) return reply.status(404).send({ error: "mealNotFound" });
+  return reply.status(201).send(result.rows[0]);
+});
 
 app.get("/", async (_request, reply) => {
   return reply.type("text/html").send(`<!doctype html>

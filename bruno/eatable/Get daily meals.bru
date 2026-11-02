@@ -1,0 +1,42 @@
+meta {
+  name: Get daily meals
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/meals?date={{date}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+docs {
+  Fetch the signed-in user's meal categories and entries for a date.
+
+  Example response:
+  {
+    "date": "2026-11-02",
+    "mealTypes": [
+      {
+        "id": "9c7652b2-2fb9-4ea0-992e-09cfb43a4cf9",
+        "name": "Śniadanie",
+        "sortOrder": 0,
+        "entries": [
+          {
+            "id": "b7906b25-4d20-465c-bbca-f5a922c4edb9",
+            "type": "product",
+            "title": "Banana",
+            "quantity": "1 medium",
+            "notes": null,
+            "calories": 105,
+            "createdAt": "2026-11-02T08:30:00.000Z"
+          }
+        ]
+      }
+    ]
+  }
+}

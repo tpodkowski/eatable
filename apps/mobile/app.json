@@ -13,6 +13,9 @@
     },
     "android": {
       "package": "com.eatable.app"
-    }
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }

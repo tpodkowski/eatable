@@ -1,0 +1,46 @@
+meta {
+  name: Create meal entry
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/meals/{{mealTypeId}}/entries
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{sessionCookie}}
+}
+
+body:json {
+  {
+    "date": "{{date}}",
+    "type": "dish",
+    "title": "Oatmeal with berries",
+    "quantity": "250 g",
+    "notes": "Made with milk",
+    "calories": 380
+  }
+}
+
+docs {
+  Add a product or dish to one of the signed-in user's meal categories for a date.
+
+  Required fields: date (YYYY-MM-DD), type (dish or product), and title. Quantity, notes, and calories are optional.
+
+  Example response (201):
+  {
+    "id": "b7906b25-4d20-465c-bbca-f5a922c4edb9",
+    "type": "dish",
+    "title": "Oatmeal with berries",
+    "quantity": "250 g",
+    "notes": "Made with milk",
+    "calories": 380,
+    "createdAt": "2026-11-02T08:30:00.000Z"
+  }
+
+  The mealTypeId path parameter must belong to the signed-in user. Invalid input returns 400, a category that does not belong to the user returns 404, and an unauthenticated request returns 401.
+}

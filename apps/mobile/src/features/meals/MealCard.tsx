@@ -40,13 +40,13 @@ export function MealCard({ mealType }: { mealType: DailyMealType }) {
 
 function createStyles(colors: { amber: string; blue: string; border: string; divider: string; muted: string; subtle: string; text: string; violet: string; surface: string }) {
   return StyleSheet.create({
-    card: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 17, borderWidth: 1, paddingHorizontal: 17, paddingVertical: 16 },
-    heading: { alignItems: "center", flexDirection: "row", gap: 12 },
+    card: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 17, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12 },
+    heading: { alignItems: "center", flexDirection: "row", gap: 10 },
     orderBadge: { alignItems: "center", backgroundColor: colors.amber, borderRadius: 10, height: 34, justifyContent: "center", width: 38 },
     orderText: { color: colors.text, fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
     name: { color: colors.text, flex: 1, fontSize: 16, fontWeight: "600" },
-    emptyText: { color: colors.subtle, fontSize: 13, marginLeft: 50, marginTop: 12 },
-    entry: { borderTopColor: colors.divider, borderTopWidth: 1, marginLeft: 50, marginTop: 12, paddingTop: 11 },
+    emptyText: { color: colors.subtle, fontSize: 13, marginLeft: 48, marginTop: 10 },
+    entry: { borderTopColor: colors.divider, borderTopWidth: 1, marginLeft: 48, marginTop: 10, paddingTop: 9 },
     entryHeading: { alignItems: "center", flexDirection: "row", gap: 10, justifyContent: "space-between" },
     entryTitle: { color: colors.text, flex: 1, fontSize: 14, fontWeight: "600" },
     entryType: { color: colors.violet, fontSize: 11, fontWeight: "600" },

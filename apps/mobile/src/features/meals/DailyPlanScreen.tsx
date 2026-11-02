@@ -8,6 +8,7 @@ import { formatDate, localDateKey, shiftDate } from "../../lib/dates";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { MealCard } from "./MealCard";
 import { AddMealEntryModal } from "./AddMealEntryModal";
+import { DatePickerModal } from "./DatePickerModal";
 import { useDailyMeals } from "./useDailyMeals";
 
 const ADD_EMOJIS = ["🍎", "🍉", "🍌", "🥑", "🍔", "🍕", "🧀", "🥗", "🍖", "🍹"];
@@ -20,6 +21,7 @@ export function DailyPlanScreen() {
   const { data: session } = authClient.useSession();
   const { date, setDate, dailyMeals, isLoading, error, addEntry } = useDailyMeals(session?.user.id);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [emojiIndex, setEmojiIndex] = useState(0);
   const emojiOpacity = useRef(new Animated.Value(1)).current;
   const dayTransition = useRef(new Animated.Value(1)).current;
@@ -99,7 +101,9 @@ export function DailyPlanScreen() {
         </Pressable>
         <View style={styles.dayHeading}>
           <Text style={styles.dayEyebrow}>{t(date === localDateKey(new Date()) ? "planner.today" : "planner.dayPlan")}</Text>
-          <Text style={styles.dayDate}>{formatDate(date, locale)}</Text>
+          <Pressable accessibilityLabel={t("planner.chooseDate")} accessibilityRole="button" onPress={() => setDatePickerOpen(true)}>
+            <Text style={styles.dayDate}>{formatDate(date, locale)}</Text>
+          </Pressable>
         </View>
         <Pressable
           accessibilityLabel={t("app.nextDay")}
@@ -133,6 +137,16 @@ export function DailyPlanScreen() {
       mealTypes={dailyMeals?.mealTypes ?? []}
       onClose={() => setAddModalOpen(false)}
       onSave={addEntry}
+    />
+    <DatePickerModal
+      visible={datePickerOpen}
+      date={date}
+      locale={locale}
+      onClose={() => setDatePickerOpen(false)}
+      onSelect={(selectedDate) => {
+        setDate(selectedDate);
+        setDatePickerOpen(false);
+      }}
     />
     </>
   );

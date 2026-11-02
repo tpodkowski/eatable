@@ -13,6 +13,10 @@ export const translations = {
     planner: {
       today: "DZISIAJ",
       dayPlan: "PLAN DNIA",
+      chooseDate: "Wybierz datę",
+      goToToday: "Przejdź do dzisiaj",
+      previousMonth: "Poprzedni miesiąc",
+      nextMonth: "Następny miesiąc",
       loadingMeals: "Wczytuję posiłki…",
       noMeals: "Brak zapisanych dań",
       breakfast: "Śniadanie",
@@ -96,6 +100,10 @@ export const translations = {
     planner: {
       today: "TODAY",
       dayPlan: "DAILY PLAN",
+      chooseDate: "Choose a date",
+      goToToday: "Go to today",
+      previousMonth: "Previous month",
+      nextMonth: "Next month",
       loadingMeals: "Loading meals…",
       noMeals: "No meals saved",
       breakfast: "Breakfast",

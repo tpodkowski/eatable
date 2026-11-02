@@ -23,8 +23,19 @@ These instructions apply to the entire Eatable monorepo (`apps/api`, `apps/mobil
 
 ## API and Bruno Collection
 
+- Keep `apps/api` organized by domain: register endpoints in focused domain routers, keep application setup separate from server startup, and move domain rules and database operations out of route handlers into small modules with clear responsibilities.
+- Treat the API root (`/`) as an API endpoint; do not serve an HTML landing page there. Use explicit health or status endpoints such as `/health` when needed.
 - Document every new or changed API endpoint in the repository's Bruno collection.
 - Add a Bruno request for each endpoint, including its method, path, required headers or input data, and an example response where applicable.
 - Keep the Bruno collection and environment files free of secrets; use environment variables for URLs and sensitive values.
 - If a Bruno collection does not exist yet, create one with the first API change and document how to use it in the README.
 - When API contracts change, update related types or schemas in `packages/shared` where applicable.
+
+## Mobile App Structure
+
+- Keep Expo Router files in `apps/mobile/src/app` focused on navigation and route composition. Put screen UI and behavior in `features/<domain>` and have route files delegate to those screens.
+- Organize feature-specific screens, components, and hooks together by domain. Keep reusable UI in `components`, app-wide providers in `providers`, and cross-feature utilities or service clients in `lib`.
+- Keep screens focused on composition and user interaction. Move reusable stateful behavior into hooks and move API or platform access into service modules rather than embedding it in UI components.
+- Keep shared presentation concerns such as theme tokens and translations in their existing app-wide modules. Avoid duplicating these values inside feature components.
+- Prefer small modules with one clear responsibility. Split a component or module when it starts owning unrelated UI, state, and data access responsibilities.
+- Reuse API contract types from `packages/shared` instead of redefining them in the mobile app.

@@ -1,0 +1,66 @@
+import type { Pool, PoolClient } from "pg";
+import type { DailyMealsResponse, MealEntry } from "@eatable/shared";
+import { defaultMealTypes } from "./settings.js";
+
+async function seedDefaultMealTypes(client: PoolClient, userId: string) {
+  await client.query("BEGIN");
+  try {
+    await client.query("INSERT INTO user_meal_settings (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING", [userId]);
+    const settings = await client.query<{ defaults_seeded_at: Date | null }>(
+      "SELECT defaults_seeded_at FROM user_meal_settings WHERE user_id = $1 FOR UPDATE", [userId],
+    );
+    if (settings.rows[0]?.defaults_seeded_at === null) {
+      for (const [sortOrder, name] of defaultMealTypes.entries()) {
+        await client.query(
+          "INSERT INTO user_meal_types (user_id, name, sort_order) VALUES ($1, $2, $3) ON CONFLICT (user_id, name) DO NOTHING",
+          [userId, name, sortOrder],
+        );
+      }
+      await client.query("UPDATE user_meal_settings SET defaults_seeded_at = now() WHERE user_id = $1", [userId]);
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
+}
+
+export async function getDailyMeals(pool: Pool, userId: string, date: string): Promise<DailyMealsResponse> {
+  const client = await pool.connect();
+  try {
+    await seedDefaultMealTypes(client, userId);
+  } finally {
+    client.release();
+  }
+
+  const meals = await pool.query<DailyMealsResponse["mealTypes"][number]>(
+    `SELECT meal_type.id, meal_type.name, meal_type.sort_order AS "sortOrder",
+       COALESCE(json_agg(json_build_object(
+         'id', entry.id, 'type', entry.item_type, 'title', entry.title, 'quantity', entry.quantity,
+         'notes', entry.notes, 'calories', entry.calories, 'createdAt', entry.created_at
+       ) ORDER BY entry.created_at) FILTER (WHERE entry.id IS NOT NULL), '[]'::json) AS entries
+     FROM user_meal_types AS meal_type
+     LEFT JOIN meal_entries AS entry ON entry.user_id = meal_type.user_id
+       AND entry.meal_type_id = meal_type.id AND entry.meal_date = $2
+     WHERE meal_type.user_id = $1
+     GROUP BY meal_type.id ORDER BY meal_type.sort_order, meal_type.created_at`,
+    [userId, date],
+  );
+  return { date, mealTypes: meals.rows };
+}
+
+export async function createMealEntry(
+  pool: Pool,
+  userId: string,
+  mealTypeId: string,
+  data: { date: string; type: MealEntry["type"]; title: string; quantity: string | null; notes: string | null; calories: number | null },
+): Promise<MealEntry | null> {
+  const result = await pool.query<MealEntry>(
+    `INSERT INTO meal_entries (user_id, meal_type_id, meal_date, item_type, title, quantity, notes, calories)
+     SELECT $1, meal_type.id, $3::date, $4, $5, $6, $7, $8
+     FROM user_meal_types AS meal_type WHERE meal_type.user_id = $1 AND meal_type.id = $2
+     RETURNING id, item_type AS type, title, quantity, notes, calories, created_at AS "createdAt"`,
+    [userId, mealTypeId, data.date, data.type, data.title, data.quantity, data.notes, data.calories],
+  );
+  return result.rows[0] ?? null;
+}

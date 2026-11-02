@@ -8,6 +8,12 @@ These instructions apply to the entire Eatable monorepo (`apps/api`, `apps/mobil
 - Write source code, identifiers, comments, user-facing strings, commit-facing technical notes, API descriptions, tests, configuration explanations, and documentation in English.
 - Keep existing non-English content only when a change does not touch it; translate or replace it when editing that content.
 
+## Git Commit Attribution
+
+- Attribute commits to the real human user configured for the repository; never use an AI agent's name or identity as the commit author or committer.
+- Do not change Git author or committer configuration to impersonate a user. Use the existing repository or user Git configuration, and ask the user to configure it if it does not identify them correctly.
+- Do not create or amend commits unless the user asks for that action.
+
 ## Features and Tests
 
 - Every new feature must include automated tests covering its key behavior and relevant edge cases.

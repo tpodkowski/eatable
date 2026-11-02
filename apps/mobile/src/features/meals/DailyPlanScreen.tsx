@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
 import { authClient } from "../../lib/auth-client";
 import { formatDate, localDateKey, shiftDate } from "../../lib/dates";
@@ -22,7 +22,29 @@ export function DailyPlanScreen() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [emojiIndex, setEmojiIndex] = useState(0);
   const emojiOpacity = useRef(new Animated.Value(1)).current;
+  const dayTransition = useRef(new Animated.Value(1)).current;
+  const dayOffset = useRef(new Animated.Value(0)).current;
   const locale = i18n.resolvedLanguage === "pl" ? "pl-PL" : "en-US";
+  const changeDay = useCallback((offset: number) => {
+    Animated.parallel([
+      Animated.timing(dayTransition, { toValue: 0, duration: 110, useNativeDriver: true }),
+      Animated.timing(dayOffset, { toValue: offset > 0 ? -12 : 12, duration: 110, useNativeDriver: true }),
+    ]).start(() => {
+      setDate((current) => shiftDate(current, offset));
+      dayOffset.setValue(offset > 0 ? 12 : -12);
+      Animated.parallel([
+        Animated.spring(dayTransition, { toValue: 1, damping: 18, stiffness: 190, useNativeDriver: true }),
+        Animated.spring(dayOffset, { toValue: 0, damping: 18, stiffness: 190, useNativeDriver: true }),
+      ]).start();
+    });
+  }, [dayOffset, dayTransition, setDate]);
+  const daySwipeResponder = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 24 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2,
+    onPanResponderRelease: (_, gesture) => {
+      if (Math.abs(gesture.dx) < 56 || Math.abs(gesture.dx) < Math.abs(gesture.dy) * 1.2) return;
+      changeDay(gesture.dx < 0 ? 1 : -1);
+    },
+  }), [changeDay]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -64,13 +86,13 @@ export function DailyPlanScreen() {
         </Pressable>
       </View>
 
+      <View {...daySwipeResponder.panHandlers}>
+      <Animated.View style={{ opacity: dayTransition, transform: [{ translateX: dayOffset }] }}>
       <View style={styles.dayPicker}>
         <Pressable
           accessibilityLabel={t("app.previousDay")}
           accessibilityRole="button"
-          onPress={() => {
-            setDate((current) => shiftDate(current, -1));
-          }}
+          onPress={() => changeDay(-1)}
           style={styles.dayArrow}
         >
           <Text style={styles.dayArrowText}>‹</Text>
@@ -82,9 +104,7 @@ export function DailyPlanScreen() {
         <Pressable
           accessibilityLabel={t("app.nextDay")}
           accessibilityRole="button"
-          onPress={() => {
-            setDate((current) => shiftDate(current, 1));
-          }}
+          onPress={() => changeDay(1)}
           style={styles.dayArrow}
         >
           <Text style={styles.dayArrowText}>›</Text>
@@ -103,6 +123,8 @@ export function DailyPlanScreen() {
           {dailyMeals?.mealTypes.map((mealType) => <MealCard key={mealType.id} mealType={mealType} />)}
         </View>
       )}
+      </Animated.View>
+      </View>
     </AppScreen>
     <AddMealEntryModal
       visible={addModalOpen}

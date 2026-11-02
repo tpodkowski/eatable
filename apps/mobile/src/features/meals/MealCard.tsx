@@ -1,20 +1,11 @@
 import { useMemo } from "react";
-import type { CreateMealEntryInput, DailyMealType } from "@eatable/shared";
+import type { DailyMealType } from "@eatable/shared";
 import { useTranslation } from "react-i18next";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { MealEntryForm } from "./MealEntryForm";
+import { StyleSheet, Text, View } from "react-native";
 import { mealNameKey } from "../../lib/meal-name";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 
-interface MealCardProps {
-  mealType: DailyMealType;
-  entryFormOpen: boolean;
-  onOpenEntryForm: () => void;
-  onCloseEntryForm: () => void;
-  onAddEntry: (entry: Omit<CreateMealEntryInput, "date">) => Promise<void>;
-}
-
-export function MealCard({ mealType, entryFormOpen, onOpenEntryForm, onCloseEntryForm, onAddEntry }: MealCardProps) {
+export function MealCard({ mealType }: { mealType: DailyMealType }) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -43,13 +34,6 @@ export function MealCard({ mealType, entryFormOpen, onOpenEntryForm, onCloseEntr
         <Text style={styles.emptyText}>{t("planner.noMeals")}</Text>
       )}
 
-      {entryFormOpen ? (
-        <MealEntryForm onSave={onAddEntry} onCancel={onCloseEntryForm} />
-      ) : (
-        <Pressable accessibilityRole="button" onPress={onOpenEntryForm} style={styles.addButton}>
-          <Text style={styles.addText}>＋ {t("planner.addEntry")}</Text>
-        </Pressable>
-      )}
     </View>
   );
 }
@@ -69,7 +53,5 @@ function createStyles(colors: { amber: string; blue: string; border: string; div
     entryQuantity: { color: colors.muted, fontSize: 12, marginTop: 4 },
     entryNotes: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 3 },
     entryCalories: { color: colors.blue, fontSize: 12, fontWeight: "600", marginTop: 5 },
-    addButton: { alignSelf: "flex-start", marginLeft: 50, marginTop: 16, paddingVertical: 5 },
-    addText: { color: colors.blue, fontSize: 13, fontWeight: "700" },
   });
 }

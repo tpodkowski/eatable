@@ -1,14 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import type { CreateMealEntryInput } from "@eatable/shared";
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
 import { authClient } from "../../lib/auth-client";
 import { formatDate, localDateKey, shiftDate } from "../../lib/dates";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { MealCard } from "./MealCard";
+import { AddMealEntryModal } from "./AddMealEntryModal";
 import { useDailyMeals } from "./useDailyMeals";
+
+const ADD_EMOJIS = ["🍎", "🍉", "🍌", "🥑", "🍔", "🍕", "🧀", "🥗", "🍖", "🍹"];
 
 export function DailyPlanScreen() {
   const router = useRouter();
@@ -17,15 +19,39 @@ export function DailyPlanScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: session } = authClient.useSession();
   const { date, setDate, dailyMeals, isLoading, error, addEntry } = useDailyMeals(session?.user.id);
-  const [activeMealId, setActiveMealId] = useState<string | null>(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [emojiIndex, setEmojiIndex] = useState(0);
+  const emojiOpacity = useRef(new Animated.Value(1)).current;
   const locale = i18n.resolvedLanguage === "pl" ? "pl-PL" : "en-US";
 
-  function saveEntry(mealTypeId: string, entry: Omit<CreateMealEntryInput, "date">) {
-    return addEntry(mealTypeId, entry);
-  }
+  useEffect(() => {
+    const timer = setInterval(() => {
+      Animated.sequence([
+        Animated.timing(emojiOpacity, { toValue: 0, duration: 220, useNativeDriver: true }),
+        Animated.timing(emojiOpacity, { toValue: 1, duration: 320, useNativeDriver: true }),
+      ]).start();
+      setEmojiIndex((current) => (current + 1) % ADD_EMOJIS.length);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [emojiOpacity]);
 
   return (
-    <AppScreen>
+    <>
+    <AppScreen footer={(
+      <Pressable
+        accessibilityLabel={t("planner.addEntry")}
+        accessibilityRole="button"
+        disabled={!dailyMeals || Boolean(error)}
+        onPress={() => setAddModalOpen(true)}
+        style={({ pressed }) => [styles.addButton, (!dailyMeals || Boolean(error)) && styles.disabledButton, pressed && styles.pressed]}
+      >
+        <Text style={styles.addButtonText}>{t("planner.addEntryShort")}</Text>
+        <Animated.Text style={[styles.addButtonEmoji, { opacity: emojiOpacity, transform: [{ scale: emojiOpacity.interpolate({ inputRange: [0, 1], outputRange: [0.65, 1] }) }] }]}>
+          {ADD_EMOJIS[emojiIndex]}
+        </Animated.Text>
+      </Pressable>
+    )}>
       <View style={styles.header}>
         <Text style={styles.eyebrow}>EATABLE</Text>
         <Pressable
@@ -44,7 +70,6 @@ export function DailyPlanScreen() {
           accessibilityRole="button"
           onPress={() => {
             setDate((current) => shiftDate(current, -1));
-            setActiveMealId(null);
           }}
           style={styles.dayArrow}
         >
@@ -59,7 +84,6 @@ export function DailyPlanScreen() {
           accessibilityRole="button"
           onPress={() => {
             setDate((current) => shiftDate(current, 1));
-            setActiveMealId(null);
           }}
           style={styles.dayArrow}
         >
@@ -76,19 +100,19 @@ export function DailyPlanScreen() {
         <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text>
       ) : (
         <View style={styles.mealList}>
-          {dailyMeals?.mealTypes.map((mealType) => (
-            <MealCard
-              key={mealType.id}
-              mealType={mealType}
-              entryFormOpen={activeMealId === mealType.id}
-              onOpenEntryForm={() => setActiveMealId(mealType.id)}
-              onCloseEntryForm={() => setActiveMealId(null)}
-              onAddEntry={(entry) => saveEntry(mealType.id, entry)}
-            />
-          ))}
+          {dailyMeals?.mealTypes.map((mealType) => <MealCard key={mealType.id} mealType={mealType} />)}
         </View>
       )}
     </AppScreen>
+    <AddMealEntryModal
+      visible={addModalOpen}
+      date={date}
+      locale={locale}
+      mealTypes={dailyMeals?.mealTypes ?? []}
+      onClose={() => setAddModalOpen(false)}
+      onSave={addEntry}
+    />
+    </>
   );
 }
 
@@ -99,7 +123,7 @@ function getInitials(name: string) {
     : parts[0]?.slice(0, 2) ?? "U").toLocaleUpperCase("pl-PL");
 }
 
-function createStyles(colors: { blue: string; danger: string; muted: string; orange: string; primary: string; surface: string; surfaceAlt: string; text: string; violet: string }) {
+function createStyles(colors: { background: string; blue: string; danger: string; muted: string; orange: string; primary: string; surface: string; surfaceAlt: string; text: string; violet: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
     eyebrow: { color: colors.blue, fontSize: 12, fontWeight: "700", letterSpacing: 2.5 },
@@ -115,5 +139,10 @@ function createStyles(colors: { blue: string; danger: string; muted: string; ora
     muted: { color: colors.muted, fontSize: 14 },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19, marginTop: 20 },
     mealList: { gap: 12, marginTop: 22 },
+    addButton: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 16, flexDirection: "row", gap: 8, height: 52, justifyContent: "center", width: "100%" },
+    addButtonEmoji: { fontSize: 22, lineHeight: 28 },
+    addButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+    disabledButton: { opacity: 0.5 },
+    pressed: { opacity: 0.82 },
   });
 }

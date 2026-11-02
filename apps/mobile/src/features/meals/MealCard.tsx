@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import type { DailyMealType } from "@eatable/shared";
+import type { DailyMealType, MealEntry } from "@eatable/shared";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { mealNameKey } from "../../lib/meal-name";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 
-export function MealCard({ mealType }: { mealType: DailyMealType }) {
+export function MealCard({ mealType, onEditEntry }: { mealType: DailyMealType; onEditEntry: (entry: MealEntry) => void }) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -18,7 +18,7 @@ export function MealCard({ mealType }: { mealType: DailyMealType }) {
       </View>
 
       {mealType.entries.length > 0 ? mealType.entries.map((entry) => (
-        <View key={entry.id} style={styles.entry}>
+        <Pressable key={entry.id} accessibilityRole="button" accessibilityLabel={t("planner.editEntry", { title: entry.title })} onPress={() => onEditEntry(entry)} style={styles.entry}>
           <View style={styles.entryHeading}>
             <Text style={styles.entryTitle}>{entry.title}</Text>
             <Text style={styles.entryType}>{t(entry.type === "product" ? "planner.product" : "planner.dish")}</Text>
@@ -26,7 +26,7 @@ export function MealCard({ mealType }: { mealType: DailyMealType }) {
           {entry.quantity ? <Text style={styles.entryQuantity}>{entry.quantity}</Text> : null}
           {entry.notes ? <Text style={styles.entryNotes}>{entry.notes}</Text> : null}
           {entry.calories !== null ? <Text style={styles.entryCalories}>{entry.calories} kcal</Text> : null}
-        </View>
+        </Pressable>
       )) : (
         <Text style={styles.emptyText}>{t("planner.noMeals")}</Text>
       )}

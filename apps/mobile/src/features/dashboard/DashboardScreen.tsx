@@ -69,7 +69,16 @@ export function DashboardScreen() {
         <Text style={styles.summaryHint}>{t("dashboard.caloriesHint")}</Text>
       </View>
 
-      <View style={styles.nextMeal}>
+      <Pressable
+        accessibilityLabel={t("dashboard.openNextMeal")}
+        accessibilityRole="button"
+        disabled={!nextMeal}
+        onPress={() => router.push({
+          pathname: "/meals",
+          params: { date: nextMeal?.tomorrow ? tomorrowDate : localDateKey(now) },
+        })}
+        style={({ pressed }) => [styles.nextMeal, pressed && styles.pressed]}
+      >
         <Text style={styles.nextMealLabel}>{t("dashboard.nextMeal")}</Text>
         {isLoading || (nextMeal?.tomorrow && !tomorrowMeals) ? <ActivityIndicator color={colors.primary} style={styles.spinner} /> : displayedNextMeal ? (
           <>
@@ -87,7 +96,7 @@ export function DashboardScreen() {
           </>
         ) : <Text style={styles.nextMealName}>—</Text>}
         {displayedNextMeal?.tomorrow ? <Text style={styles.summaryHint}>{t("dashboard.tomorrow")}</Text> : null}
-      </View>
+      </Pressable>
 
       <Pressable accessibilityRole="button" onPress={() => router.push("/meals")} style={({ pressed }) => [styles.mealsButton, pressed && styles.pressed]}>
         <View style={styles.buttonTextWrap}>

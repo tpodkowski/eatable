@@ -1,0 +1,28 @@
+meta {
+  name: Delete meal entry
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/meals/{{mealTypeId}}/entries/{{entryId}}?date={{date}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+docs {
+  Delete a meal entry owned by the signed-in user for the specified date.
+
+  Required environment variables: baseUrl, sessionCookie, date, mealTypeId, and entryId.
+
+  Example response:
+  {
+    "success": true
+  }
+
+  Invalid IDs or dates return 400, an entry that does not belong to the user or category returns 404, and an unauthenticated request returns 401.
+}

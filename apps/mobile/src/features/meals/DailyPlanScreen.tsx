@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import type { MealEntry } from "@eatable/shared";
 import { ActivityIndicator, Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
 import { authClient } from "../../lib/auth-client";
-import { formatDate, localDateKey, shiftDate } from "../../lib/dates";
+import { formatDate, isValidDateKey, localDateKey, shiftDate } from "../../lib/dates";
 import { getInitials } from "../../lib/initials";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { MealCard } from "./MealCard";
@@ -16,18 +17,24 @@ const ADD_EMOJIS = ["🍎", "🍉", "🍌", "🥑", "🍔", "🍕", "🧀", "�
 
 export function DailyPlanScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ date?: string }>();
+  const routeDate = isValidDateKey(params.date) ? params.date : undefined;
   const { t, i18n } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: session } = authClient.useSession();
-  const { date, setDate, dailyMeals, isLoading, error, addEntry } = useDailyMeals(session?.user.id);
+  const { date, setDate, dailyMeals, isLoading, error, addEntry, editEntry, removeEntry } = useDailyMeals(session?.user.id, routeDate);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<{ mealTypeId: string; entry: MealEntry } | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [emojiIndex, setEmojiIndex] = useState(0);
   const emojiOpacity = useRef(new Animated.Value(1)).current;
   const dayTransition = useRef(new Animated.Value(1)).current;
   const dayOffset = useRef(new Animated.Value(0)).current;
   const locale = i18n.resolvedLanguage === "pl" ? "pl-PL" : "en-US";
+  useEffect(() => {
+    if (routeDate) setDate(routeDate);
+  }, [routeDate, setDate]);
   const changeDay = useCallback((offset: number) => {
     Animated.parallel([
       Animated.timing(dayTransition, { toValue: 0, duration: 110, useNativeDriver: true }),
@@ -68,7 +75,10 @@ export function DailyPlanScreen() {
         accessibilityLabel={t("planner.addEntry")}
         accessibilityRole="button"
         disabled={!dailyMeals || Boolean(error)}
-        onPress={() => setAddModalOpen(true)}
+        onPress={() => {
+          setEditingEntry(null);
+          setAddModalOpen(true);
+        }}
         style={({ pressed }) => [styles.addButton, (!dailyMeals || Boolean(error)) && styles.disabledButton, pressed && styles.pressed]}
       >
         <Text style={styles.addButtonText}>{t("planner.addEntryShort")}</Text>
@@ -129,7 +139,16 @@ export function DailyPlanScreen() {
         <>
         {dailyMeals ? <DailyNutritionSummary mealTypes={dailyMeals.mealTypes} styles={styles} t={t} /> : null}
         <View style={styles.mealList}>
-          {dailyMeals?.mealTypes.map((mealType) => <MealCard key={mealType.id} mealType={mealType} />)}
+          {dailyMeals?.mealTypes.map((mealType) => (
+            <MealCard
+              key={mealType.id}
+              mealType={mealType}
+              onEditEntry={(entry) => {
+                setEditingEntry({ mealTypeId: mealType.id, entry });
+                setAddModalOpen(true);
+              }}
+            />
+          ))}
         </View>
         </>
       )}
@@ -141,8 +160,11 @@ export function DailyPlanScreen() {
       date={date}
       locale={locale}
       mealTypes={dailyMeals?.mealTypes ?? []}
+      editingEntry={editingEntry}
       onClose={() => setAddModalOpen(false)}
       onSave={addEntry}
+      onUpdate={editEntry}
+      onDelete={removeEntry}
     />
     <DatePickerModal
       visible={datePickerOpen}

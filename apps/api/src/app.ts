@@ -12,7 +12,7 @@ export async function createApp() {
   await app.register(cors, {
     origin: allowedOrigins,
     credentials: true,
-    methods: ["GET", "POST", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
   });
 

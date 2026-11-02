@@ -1,0 +1,50 @@
+meta {
+  name: Update meal entry
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/meals/{{mealTypeId}}/entries/{{entryId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{sessionCookie}}
+}
+
+body:json {
+  {
+    "date": "{{date}}",
+    "type": "dish",
+    "title": "Scrambled eggs",
+    "quantity": "2 eggs",
+    "notes": "With chives",
+    "calories": 220,
+    "protein": 14,
+    "carbohydrates": 2,
+    "fat": 17
+  }
+}
+
+docs {
+  Update a meal entry owned by the signed-in user.
+
+  Required environment variables: baseUrl, sessionCookie, date, mealTypeId, and entryId.
+
+  Example response:
+  {
+    "id": "b7906b25-4d20-465c-bbca-f5a922c4edb9",
+    "type": "dish",
+    "title": "Scrambled eggs",
+    "quantity": "2 eggs",
+    "notes": "With chives",
+    "calories": 220,
+    "protein": 14,
+    "carbohydrates": 2,
+    "fat": 17,
+    "createdAt": "2026-11-02T08:30:00.000Z"
+  }
+}

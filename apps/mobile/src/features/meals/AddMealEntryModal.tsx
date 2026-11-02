@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { CreateMealEntryInput, DailyMealType } from "@eatable/shared";
+import type { CreateMealEntryInput, DailyMealType, MealEntry } from "@eatable/shared";
 import { useTranslation } from "react-i18next";
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
@@ -15,17 +15,20 @@ interface AddMealEntryModalProps {
   mealTypes: DailyMealType[];
   onClose: () => void;
   onSave: (mealTypeId: string, entry: Omit<CreateMealEntryInput, "date">) => Promise<void>;
+  onUpdate: (mealTypeId: string, entry: MealEntry, input: Omit<CreateMealEntryInput, "date">) => Promise<void>;
+  onDelete: (mealTypeId: string, entry: MealEntry) => Promise<void>;
+  editingEntry: { mealTypeId: string; entry: MealEntry } | null;
 }
 
-export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, onSave }: AddMealEntryModalProps) {
+export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, onSave, onUpdate, onDelete, editingEntry }: AddMealEntryModalProps) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [selectedMealTypeId, setSelectedMealTypeId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (visible) setSelectedMealTypeId(null);
-  }, [visible]);
+    if (visible) setSelectedMealTypeId(editingEntry?.mealTypeId ?? null);
+  }, [visible, editingEntry]);
 
   return (
     <Modal
@@ -41,10 +44,10 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
           </Pressable>
           <Text style={styles.date}>{formatDate(date, locale)}</Text>
         </View>
-        <Text style={styles.title}>{t("planner.addEntryTitle")}</Text>
-        <Text style={styles.description}>{t("planner.chooseMeal")}</Text>
+        <Text style={styles.title}>{t(editingEntry ? "planner.editEntryTitle" : "planner.addEntryTitle")}</Text>
+        <Text style={styles.description}>{t(editingEntry ? "planner.editEntryDescription" : "planner.chooseMeal")}</Text>
 
-        <View style={styles.mealOptions}>
+        {!editingEntry ? <View style={styles.mealOptions}>
           {mealTypes.map((mealType) => {
             const selected = selectedMealTypeId === mealType.id;
             const localizedName = mealNameKey(mealType.name);
@@ -62,11 +65,15 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
               </Pressable>
             );
           })}
-        </View>
+        </View> : null}
 
         {selectedMealTypeId ? (
           <MealEntryForm
-            onSave={(entry) => onSave(selectedMealTypeId, entry)}
+            initialEntry={editingEntry?.entry}
+            onDelete={editingEntry ? () => onDelete(editingEntry.mealTypeId, editingEntry.entry) : undefined}
+            onSave={(entry) => editingEntry
+              ? onUpdate(selectedMealTypeId, editingEntry.entry, entry)
+              : onSave(selectedMealTypeId, entry)}
             onCancel={onClose}
           />
         ) : (

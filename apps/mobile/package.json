@@ -8,7 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "node --experimental-strip-types --test src/theme.test.mjs src/lib/initials.test.mjs src/features/meals/meal-schedule.test.mjs",
+    "test": "node --experimental-strip-types --test src/theme.test.mjs src/lib/initials.test.mjs src/lib/dates.test.mjs src/features/meals/meal-schedule.test.mjs",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },

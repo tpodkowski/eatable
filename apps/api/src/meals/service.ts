@@ -66,3 +66,29 @@ export async function createMealEntry(
   );
   return result.rows[0] ?? null;
 }
+
+export async function updateMealEntry(
+  pool: Pool,
+  userId: string,
+  mealTypeId: string,
+  entryId: string,
+  data: { date: string; type: MealEntry["type"]; title: string; quantity: string | null; notes: string | null; calories: number | null; protein: number | null; carbohydrates: number | null; fat: number | null },
+): Promise<MealEntry | null> {
+  const result = await pool.query<MealEntry>(
+    `UPDATE meal_entries SET item_type = $4, title = $5, quantity = $6, notes = $7,
+       calories = $8, protein = $9, carbohydrates = $10, fat = $11, updated_at = now()
+     WHERE user_id = $1 AND meal_type_id = $2 AND id = $3 AND meal_date = $12::date
+     RETURNING id, item_type AS type, title, quantity, notes, calories, protein, carbohydrates, fat, created_at AS "createdAt"`,
+    [userId, mealTypeId, entryId, data.type, data.title, data.quantity, data.notes, data.calories, data.protein, data.carbohydrates, data.fat, data.date],
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function deleteMealEntry(pool: Pool, userId: string, mealTypeId: string, entryId: string, date: string): Promise<boolean> {
+  const result = await pool.query(
+    `DELETE FROM meal_entries
+     WHERE user_id = $1 AND meal_type_id = $2 AND id = $3 AND meal_date = $4::date`,
+    [userId, mealTypeId, entryId, date],
+  );
+  return (result.rowCount ?? 0) > 0;
+}

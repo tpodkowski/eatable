@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "pnpm db:migrate && tsx src/index.ts",
     "db:migrate": "auth migrate --config src/auth.ts --yes",
-    "test": "node --import tsx --test src/meals.test.ts",
+    "test": "node --import tsx --test src/meals.test.ts src/meals/service.test.ts src/app.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {

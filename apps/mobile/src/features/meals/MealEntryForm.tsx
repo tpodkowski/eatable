@@ -7,22 +7,25 @@ import { useAppTheme } from "../../providers/AppThemeProvider";
 
 interface MealEntryFormProps {
   onSave: (entry: Omit<CreateMealEntryInput, "date">) => Promise<void>;
+  onDelete?: () => Promise<void>;
   onCancel: () => void;
+  initialEntry?: MealEntry;
 }
 
-export function MealEntryForm({ onSave, onCancel }: MealEntryFormProps) {
+export function MealEntryForm({ onSave, onDelete, onCancel, initialEntry }: MealEntryFormProps) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [type, setType] = useState<MealEntry["type"]>("dish");
-  const [title, setTitle] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [notes, setNotes] = useState("");
-  const [calories, setCalories] = useState("");
-  const [protein, setProtein] = useState("");
-  const [carbohydrates, setCarbohydrates] = useState("");
-  const [fat, setFat] = useState("");
+  const [type, setType] = useState<MealEntry["type"]>(initialEntry?.type ?? "dish");
+  const [title, setTitle] = useState(initialEntry?.title ?? "");
+  const [quantity, setQuantity] = useState(initialEntry?.quantity ?? "");
+  const [notes, setNotes] = useState(initialEntry?.notes ?? "");
+  const [calories, setCalories] = useState(initialEntry?.calories?.toString() ?? "");
+  const [protein, setProtein] = useState(initialEntry?.protein?.toString() ?? "");
+  const [carbohydrates, setCarbohydrates] = useState(initialEntry?.carbohydrates?.toString() ?? "");
+  const [fat, setFat] = useState(initialEntry?.fat?.toString() ?? "");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
@@ -57,11 +60,29 @@ export function MealEntryForm({ onSave, onCancel }: MealEntryFormProps) {
       });
       saved = true;
     } catch {
-      setError("errors.entrySaveFailed");
+      setError(initialEntry ? "errors.entryUpdateFailed" : "errors.entrySaveFailed");
     } finally {
       setIsSaving(false);
     }
     if (saved) onCancel();
+  }
+
+  async function remove() {
+    if (!onDelete) return;
+    setIsSaving(true);
+    setError(null);
+    try {
+      await onDelete();
+      onCancel();
+    } catch {
+      setError("errors.entryDeleteFailed");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function confirmRemove() {
+    setIsDeleteConfirmOpen(true);
   }
 
   return (
@@ -127,11 +148,32 @@ export function MealEntryForm({ onSave, onCancel }: MealEntryFormProps) {
       </View>
       {error ? <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text> : null}
       <ActionButton
-        title={t("planner.saveEntry")}
+        title={t(initialEntry ? "planner.saveChanges" : "planner.saveEntry")}
         onPress={() => void submit()}
         loading={isSaving}
         disabled={!title.trim()}
       />
+      {initialEntry && onDelete ? (
+        <>
+          <Pressable accessibilityRole="button" disabled={isSaving} onPress={confirmRemove} style={styles.deleteButton}>
+            <Text style={styles.deleteText}>{t("planner.deleteEntry")}</Text>
+          </Pressable>
+          {isDeleteConfirmOpen ? (
+            <View style={styles.deleteConfirm}>
+              <Text style={styles.deleteConfirmTitle}>{t("planner.confirmDeleteTitle")}</Text>
+              <Text style={styles.deleteConfirmMessage}>{t("planner.confirmDeleteMessage")}</Text>
+              <View style={styles.deleteConfirmActions}>
+                <Pressable accessibilityRole="button" disabled={isSaving} onPress={() => setIsDeleteConfirmOpen(false)} style={styles.confirmAction}>
+                  <Text style={styles.cancelText}>{t("planner.cancelEntry")}</Text>
+                </Pressable>
+                <Pressable accessibilityRole="button" disabled={isSaving} onPress={() => void remove()} style={styles.confirmAction}>
+                  <Text style={styles.deleteText}>{t("planner.deleteEntry")}</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
+        </>
+      ) : null}
       <Pressable accessibilityRole="button" onPress={onCancel} style={styles.cancelButton}>
         <Text style={styles.cancelText}>{t("planner.cancelEntry")}</Text>
       </Pressable>
@@ -154,6 +196,13 @@ function createStyles(colors: { border: string; danger: string; muted: string; p
     notesInput: { height: 80, paddingTop: 14, textAlignVertical: "top" },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19 },
     cancelButton: { alignSelf: "center", padding: 8 },
+    deleteButton: { alignSelf: "center", padding: 8 },
+    deleteText: { color: colors.danger, fontSize: 14, fontWeight: "600" },
+    deleteConfirm: { backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 14, borderWidth: 1, gap: 7, padding: 14 },
+    deleteConfirmTitle: { color: colors.text, fontSize: 15, fontWeight: "700" },
+    deleteConfirmMessage: { color: colors.muted, fontSize: 13 },
+    deleteConfirmActions: { flexDirection: "row", justifyContent: "flex-end", marginTop: 4 },
+    confirmAction: { paddingHorizontal: 10, paddingVertical: 8 },
     cancelText: { color: colors.muted, fontSize: 13, fontWeight: "600" },
   });
 }

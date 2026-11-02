@@ -29,6 +29,8 @@ export interface CreateMealEntryInput {
   fat?: number;
 }
 
+export type UpdateMealEntryInput = Omit<CreateMealEntryInput, "date">;
+
 export interface DailyMealType {
   id: string;
   name: string;

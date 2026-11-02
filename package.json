@@ -1,0 +1,19 @@
+{
+  "name": "eatable",
+  "private": true,
+  "packageManager": "pnpm@10.20.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:mobile": "pnpm --filter @eatable/mobile start",
+    "dev:api": "pnpm --filter @eatable/api dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "~5.9.2"
+  }
+}

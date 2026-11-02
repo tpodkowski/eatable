@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: eatable
+      POSTGRES_USER: eatable
+      POSTGRES_PASSWORD: eatable
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eatable -d eatable"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://eatable:eatable@db:5432/eatable
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-eatable-local-development-secret-replace-for-production-2026}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      CLIENT_ORIGINS: ${CLIENT_ORIGINS:-http://localhost:8081}
+      HOST: 0.0.0.0
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  mobile:
+    build:
+      context: .
+      dockerfile: Dockerfile.mobile
+    restart: unless-stopped
+    environment:
+      EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost:3000}
+      EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED: ${EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED:-false}
+    ports:
+      - "8081:8081"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/mobile/node_modules
+      - /app/packages/shared/node_modules
+    command: ["pnpm", "--filter", "@eatable/mobile", "exec", "expo", "start", "--web", "--port", "8081"]
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

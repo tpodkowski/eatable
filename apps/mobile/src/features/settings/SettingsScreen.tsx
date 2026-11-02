@@ -100,7 +100,7 @@ export function SettingsScreen() {
       />
 
       {message ? <Text accessibilityRole="alert" style={styles.error}>{t(message)}</Text> : null}
-      <ActionButton title={t("app.logout")} onPress={() => void signOut()} loading={busy} secondary />
+      <ActionButton title={t("app.logout")} onPress={() => void signOut()} loading={busy} textOnly />
     </AppScreen>
   );
 }

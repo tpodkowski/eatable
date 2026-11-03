@@ -51,7 +51,16 @@ export function DashboardScreen() {
     : nextMeal;
 
   return (
-    <AppScreen>
+    <AppScreen footer={(
+      <Pressable accessibilityRole="button" onPress={() => router.push("/meals")} style={({ pressed }) => [styles.mealsButton, pressed && styles.pressed]}>
+        <Text style={styles.mealsEmoji}>📅</Text>
+        <View style={styles.buttonTextWrap}>
+          <Text style={styles.buttonTitle}>{t("dashboard.openMeals")}</Text>
+          <Text style={styles.buttonSubtitle}>{t("dashboard.mealsSubtitle")}</Text>
+        </View>
+        <Text style={styles.arrow}>›</Text>
+      </Pressable>
+    )}>
       <View style={styles.header}>
         <Text style={styles.date}>{today}</Text>
         <Pressable accessibilityLabel={t("app.openSettings")} accessibilityRole="button" onPress={() => router.push("/settings")} style={styles.avatar}>
@@ -59,11 +68,14 @@ export function DashboardScreen() {
         </Pressable>
       </View>
 
-      <Text style={styles.greeting}>{t("dashboard.greeting")} {session?.user.name?.split(" ")[0] ?? ""}</Text>
+      <Text style={styles.greeting}>{t("dashboard.greeting")} 👋 {session?.user.name?.split(" ")[0] ?? ""}</Text>
       <Text style={styles.subtitle}>{t("dashboard.subtitle")}</Text>
 
       <View style={styles.summary}>
-        <Text style={styles.summaryLabel}>{t("dashboard.todayCalories")}</Text>
+        <View style={styles.widgetHeading}>
+          <Text style={styles.widgetEmoji}>🔥</Text>
+          <Text style={styles.summaryLabel}>{t("dashboard.todayCalories")}</Text>
+        </View>
         {isLoading ? <View style={styles.summarySkeleton}><SkeletonBlock width="48%" height={40} color={colors.surfaceAlt} /><SkeletonBlock width="72%" height={13} color={colors.surfaceAlt} /></View> : (
           <Text style={styles.calories}>{error ? "—" : calories}<Text style={styles.unit}> kcal</Text></Text>
         )}
@@ -80,7 +92,10 @@ export function DashboardScreen() {
         })}
         style={({ pressed }) => [styles.nextMeal, pressed && styles.pressed]}
       >
-        <Text style={styles.nextMealLabel}>{t("dashboard.nextMeal")}</Text>
+        <View style={styles.widgetHeading}>
+          <Text style={styles.widgetEmoji}>🍽️</Text>
+          <Text style={styles.nextMealLabel}>{t("dashboard.nextMeal")}</Text>
+        </View>
         {isLoading || (nextMeal?.tomorrow && !tomorrowMeals) ? <View style={styles.nextMealSkeleton}><SkeletonBlock width="65%" height={18} color={colors.surfaceAlt} /><SkeletonBlock width="90%" height={12} color={colors.surfaceAlt} /></View> : displayedNextMeal ? (
           <>
             <View style={styles.nextMealRow}>
@@ -99,18 +114,11 @@ export function DashboardScreen() {
         {displayedNextMeal?.tomorrow ? <Text style={styles.summaryHint}>{t("dashboard.tomorrow")}</Text> : null}
       </Pressable>
 
-      <Pressable accessibilityRole="button" onPress={() => router.push("/meals")} style={({ pressed }) => [styles.mealsButton, pressed && styles.pressed]}>
-        <View style={styles.buttonTextWrap}>
-          <Text style={styles.buttonTitle}>{t("dashboard.openMeals")}</Text>
-          <Text style={styles.buttonSubtitle}>{t("dashboard.mealsSubtitle")}</Text>
-        </View>
-        <Text style={styles.arrow}>›</Text>
-      </Pressable>
     </AppScreen>
   );
 }
 
-function createStyles(colors: { blue: string; muted: string; orange: string; primary: string; surface: string; surfaceAlt: string; text: string; violet: string }) {
+function createStyles(colors: { border: string; blue: string; muted: string; orange: string; primary: string; surfaceAlt: string; text: string; violet: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
     date: { color: colors.muted, fontSize: 14, textTransform: "capitalize" },
@@ -118,12 +126,14 @@ function createStyles(colors: { blue: string; muted: string; orange: string; pri
     avatarText: { color: colors.violet, fontSize: 14, fontWeight: "700" },
     greeting: { color: colors.text, fontSize: 32, fontWeight: "700", letterSpacing: -0.8, marginTop: 42 },
     subtitle: { color: colors.muted, fontSize: 15, marginTop: 7 },
-    summary: { backgroundColor: colors.surface, borderColor: colors.surfaceAlt, borderRadius: 22, borderWidth: 1, marginTop: 30, minHeight: 180, padding: 22 },
+    summary: { backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 22, borderWidth: 1, marginTop: 30, minHeight: 180, padding: 22 },
+    widgetHeading: { alignItems: "center", flexDirection: "row", gap: 8 },
+    widgetEmoji: { fontSize: 17 },
     summaryLabel: { color: colors.orange, fontSize: 12, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" },
     calories: { color: colors.text, fontSize: 48, fontWeight: "700", letterSpacing: -1.5, marginTop: 18 },
     unit: { color: colors.muted, fontSize: 19, fontWeight: "600", letterSpacing: 0 },
     summaryHint: { color: colors.muted, fontSize: 13, marginTop: 5 },
-    nextMeal: { backgroundColor: colors.surface, borderColor: colors.surfaceAlt, borderRadius: 14, borderWidth: 1, marginTop: 12, padding: 12 },
+    nextMeal: { backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 14, borderWidth: 1, marginTop: 12, padding: 12 },
     nextMealLabel: { color: colors.orange, fontSize: 12, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" },
     nextMealRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
     nextMealName: { color: colors.text, fontSize: 16, fontWeight: "700", marginTop: 6 },
@@ -132,11 +142,12 @@ function createStyles(colors: { blue: string; muted: string; orange: string; pri
     nextMealEntry: { color: colors.text, fontSize: 12, lineHeight: 17 },
     summarySkeleton: { gap: 16, marginTop: 18 },
     nextMealSkeleton: { gap: 12, marginTop: 12 },
-    mealsButton: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 18, flexDirection: "row", justifyContent: "space-between", marginTop: 16, minHeight: 82, paddingHorizontal: 20 },
+    mealsButton: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 18, borderWidth: 1, flexDirection: "row", gap: 14, justifyContent: "space-between", minHeight: 82, paddingHorizontal: 20, width: "100%" },
+    mealsEmoji: { fontSize: 26 },
     buttonTextWrap: { gap: 4 },
-    buttonTitle: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
-    buttonSubtitle: { color: "#FFFFFF", fontSize: 13, opacity: 0.8 },
-    arrow: { color: "#FFFFFF", fontSize: 32, fontWeight: "300" },
+    buttonTitle: { color: colors.text, fontSize: 16, fontWeight: "700" },
+    buttonSubtitle: { color: colors.muted, fontSize: 13 },
+    arrow: { color: "#000000", fontSize: 32, fontWeight: "300" },
     pressed: { opacity: 0.82 },
   });
 }

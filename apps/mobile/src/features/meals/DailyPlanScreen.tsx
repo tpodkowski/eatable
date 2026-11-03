@@ -227,19 +227,19 @@ function DailyNutritionSummary({ mealTypes, styles, t }: { mealTypes: NonNullabl
   );
 }
 
-function createStyles(colors: { background: string; blue: string; danger: string; muted: string; orange: string; primary: string; primaryText: string; surface: string; surfaceAlt: string; text: string }) {
+function createStyles(colors: { background: string; border: string; blue: string; danger: string; muted: string; orange: string; primary: string; primaryText: string; surface: string; surfaceAlt: string; text: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "flex-start" },
-    backButton: { alignItems: "flex-start", justifyContent: "center", minHeight: 44, paddingRight: 12 },
-    backText: { color: colors.primary, fontSize: 15, fontWeight: "600" },
+    backButton: { alignItems: "flex-start", justifyContent: "center", minHeight: 26, paddingRight: 8 },
+    backText: { color: colors.primary, fontSize: 14, fontWeight: "600" },
     dateStripHeader: { alignItems: "center", flexDirection: "row", justifyContent: "flex-end", marginTop: 16 },
     monthPicker: { alignItems: "center", flexDirection: "row", gap: 5, minHeight: 36, paddingHorizontal: 4 },
     monthLabel: { color: colors.muted, fontSize: 13, fontWeight: "600", textTransform: "capitalize" },
     monthChevron: { color: colors.primary, fontSize: 18, lineHeight: 22 },
     dateStrip: { gap: 8, paddingVertical: 4 },
-    dateButton: { alignItems: "center", backgroundColor: "transparent", borderRadius: 13, height: 62, justifyContent: "center", marginRight: 0, width: 48 },
-    selectedDateButton: { backgroundColor: colors.primary },
-    todayDateButton: { backgroundColor: colors.orange },
+    dateButton: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 13, borderWidth: 1, height: 62, justifyContent: "center", marginRight: 0, width: 48 },
+    selectedDateButton: { backgroundColor: colors.primary, borderColor: colors.primary },
+    todayDateButton: { backgroundColor: colors.orange, borderColor: colors.orange },
     weekdayText: { color: colors.muted, fontSize: 11, fontWeight: "600", textTransform: "uppercase" },
     dayNumberText: { color: colors.text, fontSize: 16, fontWeight: "700", marginTop: 4 },
     selectedDateText: { color: colors.primaryText },
@@ -249,7 +249,7 @@ function createStyles(colors: { background: string; blue: string; danger: string
     muted: { color: colors.muted, fontSize: 14 },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19, marginTop: 20 },
     mealList: { gap: 10, marginTop: 18 },
-    summary: { marginTop: 22, paddingHorizontal: 4, paddingBottom: 8 },
+    summary: { backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 16, borderWidth: 1, marginTop: 22, padding: 16 },
     summaryTitle: { color: colors.muted, fontSize: 11, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase" },
     summaryCalories: { color: colors.text, fontSize: 20, fontWeight: "600", marginTop: 4 },
     summaryMacros: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 5 },

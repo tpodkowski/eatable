@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { CreateMealEntryInput, MealEntry } from "@eatable/shared";
 import { useTranslation } from "react-i18next";
@@ -28,8 +28,9 @@ export function MealEntryForm({ onSave, onCancel, onFooterChange, initialEntry }
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({});
+  const submitRef = useRef<() => Promise<void>>(async () => undefined);
 
-  async function submit() {
+  const submit = useCallback(async () => {
     const validation = validateMealEntryForm({ title, quantity, notes, calories, protein, carbohydrates, fat });
     setFieldErrors(validation);
     if (Object.keys(validation).length > 0) return;
@@ -59,19 +60,20 @@ export function MealEntryForm({ onSave, onCancel, onFooterChange, initialEntry }
       setIsSaving(false);
     }
     if (saved) onCancel();
-  }
+  }, [calories, carbohydrates, fat, initialEntry, notes, onCancel, onSave, protein, quantity, title]);
+  submitRef.current = submit;
 
   useEffect(() => {
     onFooterChange(
       <View style={styles.footerActions}>
         <ActionButton
           title={t(initialEntry ? "planner.saveChanges" : "planner.saveEntry")}
-          onPress={() => void submit()}
+          onPress={() => void submitRef.current()}
           loading={isSaving}
         />
       </View>,
     );
-  }, [isSaving, title, initialEntry, onFooterChange, styles, t]);
+  }, [initialEntry, isSaving, onFooterChange, styles, t]);
 
   return (
     <View style={styles.form}>

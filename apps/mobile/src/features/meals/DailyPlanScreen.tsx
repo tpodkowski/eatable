@@ -115,15 +115,13 @@ export function DailyPlanScreen() {
         >
           <Text style={styles.backText}>{t("app.back")}</Text>
         </Pressable>
-      </View>
-
-      <View style={styles.dateStripHeader}>
         <Pressable accessibilityLabel={t("planner.chooseDate")} accessibilityRole="button" onPress={() => setDatePickerOpen(true)} style={styles.monthPicker}>
           <Text style={styles.monthLabel}>{monthLabel}</Text>
           <Text style={styles.monthChevron}>⌄</Text>
         </Pressable>
       </View>
       <ScrollView
+        style={styles.dateStripScroll}
         key={dateStrip[0]}
         ref={dateStripRef}
         contentOffset={{ x: Math.max(0, selectedDayIndex * DATE_STRIP_ITEM_INTERVAL), y: 0 }}
@@ -229,13 +227,13 @@ function DailyNutritionSummary({ mealTypes, styles, t }: { mealTypes: NonNullabl
 
 function createStyles(colors: { background: string; border: string; blue: string; danger: string; muted: string; orange: string; primary: string; primaryText: string; surface: string; surfaceAlt: string; text: string }) {
   return StyleSheet.create({
-    header: { alignItems: "center", flexDirection: "row", justifyContent: "flex-start" },
+    header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: -8, minHeight: 36 },
     backButton: { alignItems: "flex-start", justifyContent: "center", minHeight: 26, paddingRight: 8 },
     backText: { color: colors.primary, fontSize: 14, fontWeight: "600" },
-    dateStripHeader: { alignItems: "center", flexDirection: "row", justifyContent: "flex-end", marginTop: 16 },
     monthPicker: { alignItems: "center", flexDirection: "row", gap: 5, minHeight: 36, paddingHorizontal: 4 },
     monthLabel: { color: colors.muted, fontSize: 13, fontWeight: "600", textTransform: "capitalize" },
-    monthChevron: { color: colors.primary, fontSize: 18, lineHeight: 22 },
+    monthChevron: { color: colors.primary, fontSize: 18, includeFontPadding: false, lineHeight: 18, textAlignVertical: "center" },
+    dateStripScroll: { marginVertical: 8 },
     dateStrip: { gap: 8, paddingVertical: 4 },
     dateButton: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 13, borderWidth: 1, height: 62, justifyContent: "center", marginRight: 0, width: 48 },
     selectedDateButton: { backgroundColor: colors.primary, borderColor: colors.primary },

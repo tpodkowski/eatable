@@ -13,5 +13,8 @@ RUN pnpm install --filter @eatable/api... --no-frozen-lockfile
 
 COPY . .
 
+ENV NODE_ENV=production
+RUN pnpm --filter @eatable/api build
+
 EXPOSE 3000
-CMD ["pnpm", "--filter", "@eatable/api", "start"]
+CMD ["sh", "-c", "pnpm --filter @eatable/api db:migrate && node apps/api/dist/index.js"]

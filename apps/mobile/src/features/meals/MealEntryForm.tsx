@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ActionButton } from "../../components/ActionButton";
 import { useAppTheme } from "../../providers/AppThemeProvider";
+import { validateMealEntryForm } from "./meal-entry-form-validation";
 
 interface MealEntryFormProps {
   onSave: (entry: Omit<CreateMealEntryInput, "date">) => Promise<void>;
@@ -26,23 +27,18 @@ export function MealEntryForm({ onSave, onCancel, onFooterChange, initialEntry }
   const [fat, setFat] = useState(initialEntry?.fat?.toString() ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({});
 
   async function submit() {
+    const validation = validateMealEntryForm({ title, quantity, notes, calories, protein, carbohydrates, fat });
+    setFieldErrors(validation);
+    if (Object.keys(validation).length > 0) return;
     const calorieValue = calories.trim() === "" ? undefined : Number(calories);
-    if (calorieValue !== undefined && (!Number.isInteger(calorieValue) || calorieValue < 0 || calorieValue > 100_000)) {
-      setError("errors.invalidCalories");
-      return;
-    }
     const macroInputs = { protein, carbohydrates, fat };
     const macroValues: Partial<Record<keyof typeof macroInputs, number>> = {};
     for (const [name, raw] of Object.entries(macroInputs)) {
       if (!raw.trim()) continue;
-      const value = Number(raw);
-      if (!Number.isInteger(value) || value < 0 || value > 100_000) {
-        setError("errors.invalidMacro");
-        return;
-      }
-      macroValues[name as keyof typeof macroInputs] = value;
+      macroValues[name as keyof typeof macroInputs] = Number(raw);
     }
 
     setIsSaving(true);
@@ -72,7 +68,6 @@ export function MealEntryForm({ onSave, onCancel, onFooterChange, initialEntry }
           title={t(initialEntry ? "planner.saveChanges" : "planner.saveEntry")}
           onPress={() => void submit()}
           loading={isSaving}
-          disabled={!title.trim()}
         />
       </View>,
     );
@@ -82,25 +77,30 @@ export function MealEntryForm({ onSave, onCancel, onFooterChange, initialEntry }
     <View style={styles.form}>
       <View style={styles.field}>
         <Text style={styles.fieldLabel}>{t("planner.entryTitleLabel")}</Text>
-        <TextInput autoCapitalize="sentences" maxLength={160} onChangeText={setTitle} placeholder={t("planner.entryTitlePlaceholder")} placeholderTextColor={colors.placeholder} style={styles.input} value={title} />
+        <TextInput accessibilityLabel={t("planner.entryTitleLabel")} autoCapitalize="sentences" maxLength={160} onChangeText={(value) => { setTitle(value); setFieldErrors((current) => ({ ...current, title: undefined })); }} placeholder={t("planner.entryTitlePlaceholder")} placeholderTextColor={colors.placeholder} style={[styles.input, fieldErrors.title && styles.inputInvalid]} value={title} />
+        {fieldErrors.title ? <Text accessibilityRole="alert" style={styles.fieldError}>{t(fieldErrors.title)}</Text> : null}
       </View>
       <View style={styles.field}>
         <Text style={styles.fieldLabel}>{t("planner.entryQuantityLabel")}</Text>
-        <TextInput maxLength={60} onChangeText={setQuantity} placeholder={t("planner.entryQuantityPlaceholder")} placeholderTextColor={colors.placeholder} style={styles.input} value={quantity} />
+        <TextInput accessibilityLabel={t("planner.entryQuantityLabel")} maxLength={60} onChangeText={(value) => { setQuantity(value); setFieldErrors((current) => ({ ...current, quantity: undefined })); }} placeholder={t("planner.entryQuantityPlaceholder")} placeholderTextColor={colors.placeholder} style={[styles.input, fieldErrors.quantity && styles.inputInvalid]} value={quantity} />
+        {fieldErrors.quantity ? <Text accessibilityRole="alert" style={styles.fieldError}>{t(fieldErrors.quantity)}</Text> : null}
       </View>
       <View style={styles.field}>
         <Text style={styles.fieldLabel}>{t("planner.entryNotesLabel")}</Text>
-        <TextInput maxLength={500} multiline onChangeText={setNotes} placeholder={t("planner.entryNotesPlaceholder")} placeholderTextColor={colors.placeholder} style={[styles.input, styles.notesInput]} value={notes} />
+        <TextInput accessibilityLabel={t("planner.entryNotesLabel")} maxLength={500} multiline onChangeText={(value) => { setNotes(value); setFieldErrors((current) => ({ ...current, notes: undefined })); }} placeholder={t("planner.entryNotesPlaceholder")} placeholderTextColor={colors.placeholder} style={[styles.input, styles.notesInput, fieldErrors.notes && styles.inputInvalid]} value={notes} />
+        {fieldErrors.notes ? <Text accessibilityRole="alert" style={styles.fieldError}>{t(fieldErrors.notes)}</Text> : null}
       </View>
       <View style={styles.field}>
         <Text style={styles.fieldLabel}>{t("planner.entryCaloriesLabel")}</Text>
-        <TextInput keyboardType="number-pad" maxLength={6} onChangeText={setCalories} placeholder={t("planner.entryCaloriesPlaceholder")} placeholderTextColor={colors.placeholder} style={styles.input} value={calories} />
+        <TextInput accessibilityLabel={t("planner.entryCaloriesLabel")} keyboardType="number-pad" maxLength={6} onChangeText={(value) => { setCalories(value); setFieldErrors((current) => ({ ...current, calories: undefined })); }} placeholder={t("planner.entryCaloriesPlaceholder")} placeholderTextColor={colors.placeholder} style={[styles.input, fieldErrors.calories && styles.inputInvalid]} value={calories} />
+        {fieldErrors.calories ? <Text accessibilityRole="alert" style={styles.fieldError}>{t(fieldErrors.calories)}</Text> : null}
       </View>
       <View style={styles.macroInputs}>
         {([ ["protein", protein, setProtein], ["carbohydrates", carbohydrates, setCarbohydrates], ["fat", fat, setFat] ] as const).map(([name, value, setValue]) => (
           <View key={name} style={styles.field}>
             <Text style={styles.fieldLabel}>{t(`planner.${name}`)}</Text>
-            <TextInput accessibilityLabel={t(`planner.${name}`)} keyboardType="number-pad" maxLength={6} onChangeText={setValue} placeholder="g" placeholderTextColor={colors.placeholder} style={[styles.input, styles.macroInput]} value={value} />
+            <TextInput accessibilityLabel={t(`planner.${name}`)} keyboardType="number-pad" maxLength={6} onChangeText={(nextValue) => { setValue(nextValue); setFieldErrors((current) => ({ ...current, [name]: undefined })); }} placeholder="g" placeholderTextColor={colors.placeholder} style={[styles.input, styles.macroInput, fieldErrors[name] && styles.inputInvalid]} value={value} />
+            {fieldErrors[name] ? <Text accessibilityRole="alert" style={styles.fieldError}>{t(fieldErrors[name]!)}</Text> : null}
           </View>
         ))}
       </View>
@@ -116,10 +116,12 @@ function createStyles(colors: { border: string; danger: string; muted: string; p
     field: { gap: 5, width: "100%" },
     fieldLabel: { color: colors.muted, fontSize: 12, fontWeight: "600" },
     input: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.text, fontSize: 15, height: 52, paddingHorizontal: 14 },
+    inputInvalid: { borderColor: colors.danger },
     macroInputs: { gap: 10, width: "100%" },
     macroInput: { width: 72, textAlign: "left" },
     notesInput: { height: 80, paddingTop: 14, textAlignVertical: "top" },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19 },
+    fieldError: { color: colors.danger, fontSize: 12, lineHeight: 17 },
     deleteText: { color: colors.danger, fontSize: 14, fontWeight: "600" },
   });
 }

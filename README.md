@@ -75,3 +75,22 @@ apps/
 packages/
   shared/    wspólne typy i kontrakty
 ```
+
+## Test API deployment on a VPS
+
+The test deployment runs the API, PostgreSQL, and Caddy on one VPS. PostgreSQL has no published host port and is reachable only on the private Compose network. GitHub Actions builds an immutable image for each commit pushed to `staging`, publishes it to GHCR, uploads the Compose and Caddy configuration, and updates the test stack over SSH. The production environment is intentionally not configured yet.
+
+### One-time VPS setup
+
+1. Create a VPS with Docker Engine and the Docker Compose plugin. Point a DNS A/AAAA record for the test API hostname at the VPS. Allow inbound SSH, HTTP (80), and HTTPS (443); do not open ports 3000 or 5432.
+2. Create a deploy user with Docker access and SSH public-key login. Add the corresponding private key as the GitHub Environment secret `VPS_SSH_PRIVATE_KEY`.
+3. Create `/opt/eatable-test`, copy `.env.test.example` there as `.env`, and set owner-only permissions (`chmod 600 /opt/eatable-test/.env`). Replace every placeholder. Use a long random alphanumeric database password so the same value can safely appear in `DATABASE_URL`; generate `BETTER_AUTH_SECRET` with `openssl rand -base64 32`.
+4. Set `IMAGE_NAME` to `ghcr.io/<lowercase-github-owner>/eatable-api`. `BETTER_AUTH_URL` and `API_DOMAIN` must use the test hostname. Set `CLIENT_ORIGINS` to the exact allowed client origins, or leave it empty for a native-only test client.
+5. Create a GitHub Actions environment named `test` and configure these environment secrets: `VPS_HOST`, `VPS_USER`, `VPS_SSH_PRIVATE_KEY`, `VPS_KNOWN_HOSTS`, `GHCR_USERNAME`, and `GHCR_READ_TOKEN`. The read token needs permission to pull the package from GHCR. Obtain the known-hosts line from a trusted source when provisioning the server; do not disable SSH host key checking.
+6. Push to `staging`, or run the `Deploy test API` workflow manually. The first successful start obtains the HTTPS certificate through Caddy. Verify `https://<test-hostname>/health` and inspect logs with `docker compose -f /opt/eatable-test/compose.test.yaml logs -f api`.
+
+The API image currently runs Better Auth's schema migration and the app migrations on startup. The PostgreSQL data lives in the `postgres_test_data` Docker volume. Back it up off-server before destructive operations; removing the volume deletes the test database. For a quick manual restart, run `cd /opt/eatable-test && docker compose -f compose.test.yaml up -d`.
+
+### GitHub Actions secrets
+
+Secrets belong to the `test` GitHub Environment, not repository files. `VPS_KNOWN_HOSTS` should contain the verified SSH host key line. `GHCR_READ_TOKEN` is used only to log the VPS into GHCR during deployment; the workflow uses its short-lived `GITHUB_TOKEN` to publish images.

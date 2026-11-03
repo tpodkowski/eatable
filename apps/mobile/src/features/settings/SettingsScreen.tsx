@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ActionButton } from "../../components/ActionButton";
 import { AppScreen } from "../../components/AppScreen";
 import { authErrorKey } from "../../lib/auth-errors";
 import { authClient } from "../../lib/auth-client";
 import { readLanguagePreference, saveLanguagePreference } from "../../lib/preferences";
+import { fetchUserProfile, updateDailyCalorieLimit } from "../../lib/profile-api";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import type { AppLanguage } from "../../i18n/translations";
 
@@ -19,6 +20,25 @@ export function SettingsScreen() {
   const [language, setLanguage] = useState<AppLanguage>(i18n.resolvedLanguage === "en" ? "en" : "pl");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [dailyCalorieLimit, setDailyCalorieLimit] = useState("2000");
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
+  const initialLimitLoaded = useRef(false);
+  const latestSave = useRef(0);
+
+  useEffect(() => {
+    if (!session) return;
+    let active = true;
+    void fetchUserProfile()
+      .then((profile) => {
+        if (active) {
+          initialLimitLoaded.current = true;
+          setDailyCalorieLimit(String(profile.dailyCalorieLimit));
+        }
+      })
+      .catch(() => { if (active) setProfileMessage("errors.profileLoadFailed"); });
+    return () => { active = false; };
+  }, [session]);
 
   useEffect(() => {
     let active = true;
@@ -57,6 +77,36 @@ export function SettingsScreen() {
     }
   }
 
+  useEffect(() => {
+    if (!session || !initialLimitLoaded.current) return;
+    const value = Number(dailyCalorieLimit);
+    if (!/^\d+$/.test(dailyCalorieLimit) || !Number.isInteger(value) || value < 1 || value > 100_000) {
+      setProfileBusy(false);
+      setProfileMessage("errors.invalidDailyCalorieLimit");
+      return;
+    }
+    const saveId = ++latestSave.current;
+    setProfileBusy(true);
+    setProfileMessage(null);
+    const timeout = setTimeout(() => {
+      void updateDailyCalorieLimit(value)
+        .then(() => {
+          if (latestSave.current === saveId) setProfileMessage("settings.calorieLimitSaved");
+        })
+        .catch((error) => {
+          if (latestSave.current === saveId) {
+            setProfileMessage(error instanceof Error && error.message === "invalidDailyCalorieLimit"
+              ? "errors.invalidDailyCalorieLimit"
+              : "errors.profileSaveFailed");
+          }
+        })
+        .finally(() => {
+          if (latestSave.current === saveId) setProfileBusy(false);
+        });
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [dailyCalorieLimit, session]);
+
   return (
     <AppScreen>
       <Pressable accessibilityRole="button" onPress={() => router.replace("/")} style={styles.backButton}>
@@ -74,6 +124,21 @@ export function SettingsScreen() {
             {session.user.name ? <Text style={styles.accountName}>{session.user.name}</Text> : null}
             <Text style={styles.accountEmail}>{session.user.email}</Text>
           </View>
+        </View>
+      ) : null}
+
+      {session ? (
+        <View style={styles.calorieLimitSection}>
+          <Text style={styles.preferenceLabel}>{t("settings.dailyCalorieLimit")}</Text>
+          <TextInput
+            accessibilityLabel={t("settings.dailyCalorieLimit")}
+            keyboardType="number-pad"
+            value={dailyCalorieLimit}
+            onChangeText={setDailyCalorieLimit}
+            style={styles.calorieLimitInput}
+            maxLength={6}
+          />
+          {profileMessage ? <Text accessibilityRole={profileMessage === "settings.calorieLimitSaved" ? "text" : "alert"} style={profileMessage === "settings.calorieLimitSaved" ? styles.success : styles.error}>{t(profileMessage)}</Text> : profileBusy ? <Text style={styles.saveStatus}>{t("settings.savingCalorieLimit")}</Text> : null}
         </View>
       ) : null}
 
@@ -168,6 +233,8 @@ function createStyles(colors: { background: string; border: string; danger: stri
     accountName: { color: colors.text, fontSize: 15, fontWeight: "600" },
     accountEmail: { color: colors.muted, fontSize: 13 },
     preferenceSection: { marginTop: 28 },
+    calorieLimitSection: { marginTop: 28 },
+    calorieLimitInput: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 12, borderWidth: 1, color: colors.text, fontSize: 16, minHeight: 52, paddingHorizontal: 14 },
     preferenceLabel: { color: colors.text, fontSize: 14, fontWeight: "600", marginBottom: 10 },
     preferenceOptions: { flexDirection: "row", gap: 10 },
     preferenceOption: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 12, borderWidth: 1, flex: 1, minHeight: 64, justifyContent: "center", paddingHorizontal: 8, paddingVertical: 8 },
@@ -176,5 +243,7 @@ function createStyles(colors: { background: string; border: string; danger: stri
     preferenceOptionText: { color: colors.muted, fontSize: 14, fontWeight: "600" },
     preferenceOptionTextActive: { color: colors.primary },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19, marginTop: 20 },
+    success: { color: colors.primary, fontSize: 13, lineHeight: 19, marginTop: 12 },
+    saveStatus: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 12 },
   });
 }

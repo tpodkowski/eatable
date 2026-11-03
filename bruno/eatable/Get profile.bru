@@ -1,0 +1,24 @@
+meta {
+  name: Get profile
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/profile
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+docs {
+  Fetch the signed-in user's profile. A profile is created with a daily calorie limit of 2000 when first fetched.
+
+  Example response:
+  {
+    "dailyCalorieLimit": 2000
+  }
+}

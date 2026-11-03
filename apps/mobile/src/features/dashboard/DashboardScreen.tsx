@@ -8,6 +8,7 @@ import { authClient } from "../../lib/auth-client";
 import { localDateKey, shiftDate } from "../../lib/dates";
 import { getInitials } from "../../lib/initials";
 import { fetchDailyMeals } from "../../lib/meals-api";
+import { fetchUserProfile } from "../../lib/profile-api";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { useDailyMeals } from "../meals/useDailyMeals";
 import { getNextMeal } from "../meals/meal-schedule";
@@ -23,6 +24,18 @@ export function DashboardScreen() {
   const { dailyMeals, isLoading, error } = useDailyMeals(session?.user.id);
   const [now, setNow] = useState(() => new Date());
   const [tomorrowMeals, setTomorrowMeals] = useState<typeof dailyMeals>(null);
+  const [dailyCalorieLimit, setDailyCalorieLimit] = useState<number | null>(null);
+  useEffect(() => {
+    if (!session?.user.id) {
+      setDailyCalorieLimit(null);
+      return;
+    }
+    let active = true;
+    void fetchUserProfile()
+      .then((profile) => { if (active) setDailyCalorieLimit(profile.dailyCalorieLimit); })
+      .catch(() => { if (active) setDailyCalorieLimit(null); });
+    return () => { active = false; };
+  }, [session?.user.id]);
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(timer);
@@ -77,7 +90,17 @@ export function DashboardScreen() {
           <Text style={styles.summaryLabel}>{t("dashboard.todayCalories")}</Text>
         </View>
         {isLoading ? <View style={styles.summarySkeleton}><SkeletonBlock width="48%" height={40} color={colors.surfaceAlt} /><SkeletonBlock width="72%" height={13} color={colors.surfaceAlt} /></View> : (
-          <Text style={styles.calories}>{error ? "—" : calories}<Text style={styles.unit}> kcal</Text></Text>
+          <Text style={[
+            styles.calories,
+            dailyCalorieLimit !== null && calories > dailyCalorieLimit
+              ? styles.caloriesOverLimit
+              : dailyCalorieLimit !== null && calories < dailyCalorieLimit
+                ? styles.caloriesUnderLimit
+                : null,
+          ]}>
+            {error ? "—" : calories}
+            {dailyCalorieLimit !== null ? <Text style={styles.unit}> / {dailyCalorieLimit} kcal</Text> : <Text style={styles.unit}> kcal</Text>}
+          </Text>
         )}
         <Text style={styles.summaryHint}>{t("dashboard.caloriesHint")}</Text>
       </View>
@@ -118,7 +141,7 @@ export function DashboardScreen() {
   );
 }
 
-function createStyles(colors: { border: string; blue: string; muted: string; orange: string; primary: string; surfaceAlt: string; text: string; violet: string }) {
+function createStyles(colors: { border: string; blue: string; danger: string; muted: string; orange: string; primary: string; success: string; surfaceAlt: string; text: string; violet: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
     date: { color: colors.muted, fontSize: 14, textTransform: "capitalize" },
@@ -131,6 +154,8 @@ function createStyles(colors: { border: string; blue: string; muted: string; ora
     widgetEmoji: { fontSize: 17 },
     summaryLabel: { color: colors.orange, fontSize: 12, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" },
     calories: { color: colors.text, fontSize: 48, fontWeight: "700", letterSpacing: -1.5, marginTop: 18 },
+    caloriesUnderLimit: { color: colors.success },
+    caloriesOverLimit: { color: colors.danger },
     unit: { color: colors.muted, fontSize: 19, fontWeight: "600", letterSpacing: 0 },
     summaryHint: { color: colors.muted, fontSize: 13, marginTop: 5 },
     nextMeal: { backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 14, borderWidth: 1, marginTop: 12, padding: 12 },

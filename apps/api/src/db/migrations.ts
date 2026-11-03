@@ -5,6 +5,7 @@ const MEAL_ENTRY_DETAILS_MIGRATION_ID = "2026-11-02-meal-entry-details";
 const MEAL_ENTRY_MACROS_MIGRATION_ID = "2026-11-02-meal-entry-macros";
 const MEAL_TYPE_TIMES_MIGRATION_ID = "2026-11-02-meal-type-times";
 const MEAL_ENTRY_PRODUCTS_ONLY_MIGRATION_ID = "2026-11-03-meal-entry-products-only";
+const USER_CALORIE_LIMIT_MIGRATION_ID = "2026-11-03-user-calorie-limit";
 
 const createMealTables = `
 CREATE TABLE user_meal_settings (
@@ -106,6 +107,17 @@ export async function runAppMigrations(pool: Pool) {
     if (productsOnlyMigration.rowCount === 0) {
       await client.query("ALTER TABLE meal_entries DROP COLUMN IF EXISTS item_type");
       await client.query("INSERT INTO app_migrations (id) VALUES ($1)", [MEAL_ENTRY_PRODUCTS_ONLY_MIGRATION_ID]);
+    }
+
+    const calorieLimitMigration = await client.query("SELECT 1 FROM app_migrations WHERE id = $1", [USER_CALORIE_LIMIT_MIGRATION_ID]);
+    if (calorieLimitMigration.rowCount === 0) {
+      await client.query(`
+        CREATE TABLE user_profiles (
+          user_id text PRIMARY KEY REFERENCES "user" (id) ON DELETE CASCADE,
+          daily_calorie_limit integer NOT NULL DEFAULT 2000 CHECK (daily_calorie_limit BETWEEN 1 AND 100000)
+        );
+      `);
+      await client.query("INSERT INTO app_migrations (id) VALUES ($1)", [USER_CALORIE_LIMIT_MIGRATION_ID]);
     }
 
     await client.query("COMMIT");

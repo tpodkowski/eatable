@@ -1,0 +1,31 @@
+meta {
+  name: Update profile calorie limit
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/api/profile
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{sessionCookie}}
+}
+
+body:json {
+  {
+    "dailyCalorieLimit": 2200
+  }
+}
+
+docs {
+  Update the signed-in user's daily calorie limit. The value must be an integer from 1 to 100000.
+
+  Example response:
+  {
+    "dailyCalorieLimit": 2200
+  }
+}

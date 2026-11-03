@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import { registerAuthRoutes } from "./routes/auth.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerMealRoutes } from "./routes/meals.js";
+import { registerProfileRoutes } from "./routes/profile.js";
 
 export async function createApp() {
   const app = fastify({ logger: true });
@@ -18,6 +19,7 @@ export async function createApp() {
 
   await app.register(registerAuthRoutes);
   await app.register(registerMealRoutes);
+  await app.register(registerProfileRoutes);
   await app.register(registerHealthRoutes);
   return app;
 }

@@ -4,6 +4,10 @@ export interface HealthResponse {
   timestamp: string;
 }
 
+export interface UserProfile {
+  dailyCalorieLimit: number;
+}
+
 export interface MealEntry {
   id: string;
   title: string;

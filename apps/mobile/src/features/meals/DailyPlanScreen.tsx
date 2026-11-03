@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import type { MealEntry } from "@eatable/shared";
-import { ActivityIndicator, Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
+import { SkeletonBlock } from "../../components/SkeletonBlock";
 import { authClient } from "../../lib/auth-client";
 import { formatDate, isValidDateKey, localDateKey, shiftDate } from "../../lib/dates";
 import { getInitials } from "../../lib/initials";
@@ -129,9 +130,12 @@ export function DailyPlanScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.loading}>
-          <ActivityIndicator color={colors.primary} />
-          <Text style={styles.muted}>{t("planner.loadingMeals")}</Text>
+        <View style={styles.skeletonList}>
+          {[0, 1, 2, 3].map((item) => <View key={item} style={styles.skeletonMeal}>
+            <SkeletonBlock width="42%" height={17} color={colors.surfaceAlt} />
+            <SkeletonBlock width="30%" height={14} color={colors.surfaceAlt} />
+            <SkeletonBlock width="74%" height={12} color={colors.surfaceAlt} />
+          </View>)}
         </View>
       ) : error ? (
         <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text>
@@ -204,7 +208,8 @@ function createStyles(colors: { background: string; blue: string; danger: string
     dayHeading: { alignItems: "center", flex: 1, paddingHorizontal: 6 },
     dayEyebrow: { color: colors.orange, fontSize: 10, fontWeight: "700", letterSpacing: 1.8 },
     dayDate: { color: colors.text, fontSize: 15, fontWeight: "600", marginTop: 3, textAlign: "center" },
-    loading: { alignItems: "center", gap: 10, paddingVertical: 40 },
+    skeletonList: { gap: 10, marginTop: 18 },
+    skeletonMeal: { borderBottomColor: colors.surfaceAlt, borderBottomWidth: 1, gap: 10, paddingHorizontal: 4, paddingVertical: 14 },
     muted: { color: colors.muted, fontSize: 14 },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19, marginTop: 20 },
     mealList: { gap: 10, marginTop: 18 },

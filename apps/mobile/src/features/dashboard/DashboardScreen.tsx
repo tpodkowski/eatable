@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
+import { SkeletonBlock } from "../../components/SkeletonBlock";
 import { authClient } from "../../lib/auth-client";
 import { localDateKey, shiftDate } from "../../lib/dates";
 import { getInitials } from "../../lib/initials";
@@ -11,6 +12,7 @@ import { useAppTheme } from "../../providers/AppThemeProvider";
 import { useDailyMeals } from "../meals/useDailyMeals";
 import { getNextMeal } from "../meals/meal-schedule";
 import { mealNameKey } from "../../lib/meal-name";
+import { beginGlobalLoading } from "../../lib/global-loading";
 
 export function DashboardScreen() {
   const router = useRouter();
@@ -37,9 +39,11 @@ export function DashboardScreen() {
       return;
     }
     let active = true;
+    const finishLoading = beginGlobalLoading();
     void fetchDailyMeals(tomorrowDate)
       .then((result) => { if (active) setTomorrowMeals(result); })
-      .catch(() => { if (active) setTomorrowMeals(null); });
+      .catch(() => { if (active) setTomorrowMeals(null); })
+      .finally(finishLoading);
     return () => { active = false; };
   }, [nextMeal?.tomorrow, tomorrowDate]);
   const displayedNextMeal = nextMeal?.tomorrow
@@ -63,7 +67,7 @@ export function DashboardScreen() {
 
       <View style={styles.summary}>
         <Text style={styles.summaryLabel}>{t("dashboard.todayCalories")}</Text>
-        {isLoading ? <ActivityIndicator color={colors.primary} style={styles.spinner} /> : (
+        {isLoading ? <View style={styles.summarySkeleton}><SkeletonBlock width="48%" height={40} color={colors.surfaceAlt} /><SkeletonBlock width="72%" height={13} color={colors.surfaceAlt} /></View> : (
           <Text style={styles.calories}>{error ? "—" : calories}<Text style={styles.unit}> kcal</Text></Text>
         )}
         <Text style={styles.summaryHint}>{t("dashboard.caloriesHint")}</Text>
@@ -80,7 +84,7 @@ export function DashboardScreen() {
         style={({ pressed }) => [styles.nextMeal, pressed && styles.pressed]}
       >
         <Text style={styles.nextMealLabel}>{t("dashboard.nextMeal")}</Text>
-        {isLoading || (nextMeal?.tomorrow && !tomorrowMeals) ? <ActivityIndicator color={colors.primary} style={styles.spinner} /> : displayedNextMeal ? (
+        {isLoading || (nextMeal?.tomorrow && !tomorrowMeals) ? <View style={styles.nextMealSkeleton}><SkeletonBlock width="65%" height={20} color={colors.surfaceAlt} /><SkeletonBlock width="90%" height={13} color={colors.surfaceAlt} /></View> : displayedNextMeal ? (
           <>
             <View style={styles.nextMealRow}>
               <Text style={styles.nextMealName}>{mealNameKey(displayedNextMeal.meal.name) ? t(mealNameKey(displayedNextMeal.meal.name)) : displayedNextMeal.meal.name}</Text>
@@ -130,7 +134,8 @@ function createStyles(colors: { blue: string; muted: string; orange: string; pri
     nextMealTime: { color: colors.primary, fontSize: 20, fontWeight: "700" },
     nextMealEntries: { gap: 7, marginTop: 12 },
     nextMealEntry: { color: colors.text, fontSize: 14, lineHeight: 20 },
-    spinner: { alignSelf: "flex-start", marginTop: 28 },
+    summarySkeleton: { gap: 16, marginTop: 18 },
+    nextMealSkeleton: { gap: 12, marginTop: 12 },
     mealsButton: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 18, flexDirection: "row", justifyContent: "space-between", marginTop: 16, minHeight: 82, paddingHorizontal: 20 },
     buttonTextWrap: { gap: 4 },
     buttonTitle: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },

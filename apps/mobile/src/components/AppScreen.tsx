@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useAppTheme } from "../providers/AppThemeProvider";
+import { GlobalLoadingIndicator } from "./GlobalLoadingIndicator";
 
 interface AppScreenProps extends React.PropsWithChildren {
   footer?: ReactNode;
@@ -22,6 +23,7 @@ export function AppScreen({ children, footer }: AppScreenProps) {
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style={name === "dark" ? "light" : "dark"} />
+      <GlobalLoadingIndicator />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -44,8 +46,8 @@ function createStyles(colors: { background: string; border: string }) {
     flex: { flex: 1 },
     screen: { flex: 1, backgroundColor: colors.background },
     scrollContent: { flexGrow: 1, paddingBottom: 84 },
-    content: { paddingHorizontal: 24, paddingTop: 18, paddingBottom: 28, width: "100%", maxWidth: 560, alignSelf: "center" },
-    footer: { alignItems: "center", backgroundColor: "transparent", bottom: 0, left: 0, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8, position: "absolute", right: 0, zIndex: 1 },
+    content: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 28, width: "100%", maxWidth: 560, alignSelf: "center" },
+    footer: { alignItems: "center", backgroundColor: "transparent", bottom: 0, left: 0, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, position: "absolute", right: 0, zIndex: 1 },
     footerContent: { width: "100%", maxWidth: 520 },
   });
 }

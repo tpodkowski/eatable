@@ -143,7 +143,10 @@ export function MealEntryForm({ onSave, onDelete, onCancel, initialEntry }: Meal
       />
       <View style={styles.macroInputs}>
         {([ ["protein", protein, setProtein], ["carbohydrates", carbohydrates, setCarbohydrates], ["fat", fat, setFat] ] as const).map(([name, value, setValue]) => (
-          <TextInput key={name} accessibilityLabel={t(`planner.${name}`)} keyboardType="number-pad" maxLength={6} onChangeText={setValue} placeholder={t(`planner.${name}Short`)} placeholderTextColor={colors.placeholder} style={[styles.input, styles.macroInput]} value={value} />
+          <View key={name} style={styles.macroField}>
+            <Text style={styles.macroLabel}>{t(`planner.${name}`)}</Text>
+            <TextInput accessibilityLabel={t(`planner.${name}`)} keyboardType="number-pad" maxLength={6} onChangeText={setValue} placeholder="g" placeholderTextColor={colors.placeholder} style={[styles.input, styles.macroInput]} value={value} />
+          </View>
         ))}
       </View>
       {error ? <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text> : null}
@@ -191,8 +194,10 @@ function createStyles(colors: { border: string; danger: string; muted: string; p
     typeText: { color: colors.muted, fontSize: 13, fontWeight: "600" },
     typeTextActive: { color: colors.primary },
     input: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.text, fontSize: 15, height: 52, paddingHorizontal: 14 },
-    macroInputs: { flexDirection: "row", gap: 8 },
-    macroInput: { flex: 1, paddingHorizontal: 8, textAlign: "center" },
+    macroInputs: { flexDirection: "row", gap: 6, width: "100%" },
+    macroField: { flex: 1, flexBasis: 0, gap: 5, minWidth: 0 },
+    macroLabel: { color: colors.muted, fontSize: 11, fontWeight: "600" },
+    macroInput: { flex: 1, flexBasis: 0, minWidth: 0, paddingHorizontal: 4, textAlign: "center" },
     notesInput: { height: 80, paddingTop: 14, textAlignVertical: "top" },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19 },
     cancelButton: { alignSelf: "center", padding: 8 },

@@ -48,7 +48,9 @@ function SessionRouter() {
   }, [inAuthGroup, isPending, router, session]);
 
   if (isPending || needsRedirect) return <LoadingScreen />;
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return <View style={styles.appRoot}>
+    <Stack screenOptions={{ headerShown: false }} />
+  </View>;
 }
 
 function LoadingScreen() {
@@ -62,4 +64,9 @@ function LoadingScreen() {
   );
 }
 
-const styles = StyleSheet.create({ loading: { alignItems: "center", justifyContent: "center", minHeight: 300 } });
+const styles = StyleSheet.create({
+  appRoot: { flex: 1 },
+  loading: { alignItems: "center", justifyContent: "center", minHeight: 300 },
+  rainbowTrack: { flexDirection: "row", height: 3, left: 0, overflow: "hidden", position: "absolute", right: 0, top: 0, zIndex: 10 },
+  rainbowSegment: { flex: 1 },
+});

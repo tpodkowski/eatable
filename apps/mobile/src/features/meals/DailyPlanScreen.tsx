@@ -137,7 +137,6 @@ export function DailyPlanScreen() {
         <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text>
       ) : (
         <>
-        {dailyMeals ? <DailyNutritionSummary mealTypes={dailyMeals.mealTypes} styles={styles} t={t} /> : null}
         <View style={styles.mealList}>
           {dailyMeals?.mealTypes.map((mealType) => (
             <MealCard
@@ -150,6 +149,7 @@ export function DailyPlanScreen() {
             />
           ))}
         </View>
+        {dailyMeals ? <DailyNutritionSummary mealTypes={dailyMeals.mealTypes} styles={styles} t={t} /> : null}
         </>
       )}
       </Animated.View>
@@ -199,7 +199,7 @@ function createStyles(colors: { background: string; blue: string; danger: string
     avatarButton: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderRadius: 22, height: 44, justifyContent: "center", width: 44 },
     avatarText: { color: colors.violet, fontSize: 14, fontWeight: "700" },
     dayPicker: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
-    dayArrow: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.surfaceAlt, borderRadius: 14, borderWidth: 1, height: 44, justifyContent: "center", width: 44 },
+    dayArrow: { alignItems: "center", height: 44, justifyContent: "center", width: 44 },
     dayArrowText: { color: colors.primary, fontSize: 30, fontWeight: "400", lineHeight: 34, marginTop: -3 },
     dayHeading: { alignItems: "center", flex: 1, paddingHorizontal: 6 },
     dayEyebrow: { color: colors.orange, fontSize: 10, fontWeight: "700", letterSpacing: 1.8 },
@@ -208,10 +208,10 @@ function createStyles(colors: { background: string; blue: string; danger: string
     muted: { color: colors.muted, fontSize: 14 },
     error: { color: colors.danger, fontSize: 13, lineHeight: 19, marginTop: 20 },
     mealList: { gap: 10, marginTop: 18 },
-    summary: { backgroundColor: colors.surface, borderColor: colors.surfaceAlt, borderRadius: 16, borderWidth: 1, marginTop: 16, padding: 16 },
-    summaryTitle: { color: colors.muted, fontSize: 12, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" },
-    summaryCalories: { color: colors.text, fontSize: 24, fontWeight: "700", marginTop: 5 },
-    summaryMacros: { color: colors.muted, fontSize: 13, marginTop: 7 },
+    summary: { marginTop: 22, paddingHorizontal: 4, paddingBottom: 8 },
+    summaryTitle: { color: colors.muted, fontSize: 11, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase" },
+    summaryCalories: { color: colors.text, fontSize: 20, fontWeight: "600", marginTop: 4 },
+    summaryMacros: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 5 },
     addButton: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 16, flexDirection: "row", gap: 8, height: 52, justifyContent: "center", width: "100%" },
     addButtonEmoji: { fontSize: 22, lineHeight: 28 },
     addButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },

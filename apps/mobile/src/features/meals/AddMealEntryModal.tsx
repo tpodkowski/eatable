@@ -25,10 +25,17 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [selectedMealTypeId, setSelectedMealTypeId] = useState<string | null>(null);
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (visible) setSelectedMealTypeId(editingEntry?.mealTypeId ?? null);
+    if (visible) {
+      setSelectedMealTypeId(editingEntry?.mealTypeId ?? null);
+      setSelectedEntryId(editingEntry?.entry.id ?? null);
+    }
   }, [visible, editingEntry]);
+
+  const selectedMealType = mealTypes.find((mealType) => mealType.id === selectedMealTypeId);
+  const selectedEntry = selectedMealType?.entries.find((entry) => entry.id === selectedEntryId);
 
   return (
     <Modal
@@ -44,8 +51,8 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
           </Pressable>
           <Text style={styles.date}>{formatDate(date, locale)}</Text>
         </View>
-        <Text style={styles.title}>{t(editingEntry ? "planner.editEntryTitle" : "planner.addEntryTitle")}</Text>
-        <Text style={styles.description}>{t(editingEntry ? "planner.editEntryDescription" : "planner.chooseMeal")}</Text>
+        <Text style={styles.title}>{t(selectedEntry ? "planner.editEntryTitle" : "planner.addEntryTitle")}</Text>
+        <Text style={styles.description}>{t(selectedEntry ? "planner.editEntryDescription" : "planner.chooseMeal")}</Text>
 
         {!editingEntry ? <View style={styles.mealOptions}>
           {mealTypes.map((mealType) => {
@@ -67,12 +74,37 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
           })}
         </View> : null}
 
+        {selectedMealType && selectedMealType.entries.length > 0 ? (
+          <View style={styles.entriesSection}>
+            <Text style={styles.entriesLabel}>{t("planner.entriesInMeal")}</Text>
+            {selectedMealType.entries.map((entry) => {
+              const selected = selectedEntryId === entry.id;
+              return (
+                <Pressable
+                  key={entry.id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  onPress={() => setSelectedEntryId(entry.id)}
+                  style={[styles.entryOption, selected && styles.mealOptionActive]}
+                >
+                  <Text style={[styles.mealOptionText, selected && styles.mealOptionTextActive]}>{entry.title}</Text>
+                  <Text style={styles.entryType}>{t(entry.type === "product" ? "planner.product" : "planner.dish")}</Text>
+                </Pressable>
+              );
+            })}
+            <Pressable accessibilityRole="button" onPress={() => setSelectedEntryId(null)} style={styles.addAnother}>
+              <Text style={styles.addAnotherText}>{t("planner.addAnotherEntry")}</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {selectedMealTypeId ? (
           <MealEntryForm
-            initialEntry={editingEntry?.entry}
-            onDelete={editingEntry ? () => onDelete(editingEntry.mealTypeId, editingEntry.entry) : undefined}
-            onSave={(entry) => editingEntry
-              ? onUpdate(selectedMealTypeId, editingEntry.entry, entry)
+            key={selectedEntry?.id ?? `new-${selectedMealTypeId}`}
+            initialEntry={selectedEntry}
+            onDelete={selectedEntry ? () => onDelete(selectedMealTypeId, selectedEntry) : undefined}
+            onSave={(entry) => selectedEntry
+              ? onUpdate(selectedMealTypeId, selectedEntry, entry)
               : onSave(selectedMealTypeId, entry)}
             onCancel={onClose}
           />
@@ -84,7 +116,7 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
   );
 }
 
-function createStyles(colors: { border: string; muted: string; primary: string; surface: string; surfaceAlt: string; text: string }) {
+function createStyles(colors: { border: string; muted: string; primary: string; surface: string; surfaceAlt: string; text: string; violet: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
     closeButton: { alignSelf: "flex-start", paddingVertical: 8, paddingRight: 12 },
@@ -97,6 +129,12 @@ function createStyles(colors: { border: string; muted: string; primary: string; 
     mealOptionActive: { backgroundColor: colors.surfaceAlt, borderColor: colors.primary },
     mealOptionText: { color: colors.muted, fontSize: 13, fontWeight: "600" },
     mealOptionTextActive: { color: colors.primary },
+    entriesSection: { gap: 8, marginTop: 20 },
+    entriesLabel: { color: colors.text, fontSize: 13, fontWeight: "600" },
+    entryOption: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 12, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", minHeight: 42, paddingHorizontal: 12 },
+    entryType: { color: colors.violet, fontSize: 11, fontWeight: "600" },
+    addAnother: { alignSelf: "flex-start", paddingVertical: 8 },
+    addAnotherText: { color: colors.primary, fontSize: 14, fontWeight: "600" },
     hint: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: 24 },
   });
 }

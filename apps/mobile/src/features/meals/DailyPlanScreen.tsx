@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import type { MealEntry } from "@eatable/shared";
-import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
+import type { ScrollViewInstance } from "react-native";
+import { Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
 import { SkeletonBlock } from "../../components/SkeletonBlock";
 import { authClient } from "../../lib/auth-client";
-import { formatDate, isValidDateKey, localDateKey, shiftDate } from "../../lib/dates";
+import { getDateStrip, isValidDateKey, localDateKey, shiftDate } from "../../lib/dates";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { MealCard } from "./MealCard";
 import { AddMealEntryModal } from "./AddMealEntryModal";
@@ -14,6 +15,7 @@ import { DatePickerModal } from "./DatePickerModal";
 import { useDailyMeals } from "./useDailyMeals";
 
 const ADD_EMOJIS = ["🍎", "🍉", "🍌", "🥑", "🍔", "🍕", "🧀", "🥗", "🍖", "🍹"];
+const DATE_STRIP_ITEM_INTERVAL = 56;
 
 export function DailyPlanScreen() {
   const router = useRouter();
@@ -31,10 +33,27 @@ export function DailyPlanScreen() {
   const emojiOpacity = useRef(new Animated.Value(1)).current;
   const dayTransition = useRef(new Animated.Value(1)).current;
   const dayOffset = useRef(new Animated.Value(0)).current;
+  const [stripAnchor, setStripAnchor] = useState(date);
+  const [dateStripWidth, setDateStripWidth] = useState(0);
+  const dateStripRef = useRef<ScrollViewInstance>(null);
   const locale = i18n.resolvedLanguage === "pl" ? "pl-PL" : "en-US";
+  const dateStrip = useMemo(() => getDateStrip(stripAnchor), [stripAnchor]);
+  const selectedDayIndex = dateStrip.indexOf(date);
+  const today = localDateKey(new Date());
+  const [selectedYear, selectedMonth, selectedDay] = date.split("-").map(Number);
+  const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay, 12);
+  const monthLabel = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(selectedDate);
   useEffect(() => {
     if (routeDate) setDate(routeDate);
   }, [routeDate, setDate]);
+  useEffect(() => {
+    if (!dateStrip.includes(date)) setStripAnchor(date);
+  }, [date, dateStrip]);
+  useEffect(() => {
+    if (selectedDayIndex >= 0) {
+      dateStripRef.current?.scrollTo({ x: selectedDayIndex * DATE_STRIP_ITEM_INTERVAL, y: 0, animated: true });
+    }
+  }, [date, dateStrip, selectedDayIndex]);
   const changeDay = useCallback((offset: number) => {
     Animated.parallel([
       Animated.timing(dayTransition, { toValue: 0, duration: 110, useNativeDriver: true }),
@@ -98,33 +117,49 @@ export function DailyPlanScreen() {
         </Pressable>
       </View>
 
-      <View {...daySwipeResponder.panHandlers}>
-      <Animated.View style={{ opacity: dayTransition, transform: [{ translateX: dayOffset }] }}>
-      <View style={styles.dayPicker}>
-        <Pressable
-          accessibilityLabel={t("app.previousDay")}
-          accessibilityRole="button"
-          onPress={() => changeDay(-1)}
-          style={styles.dayArrow}
-        >
-          <Text style={styles.dayArrowText}>‹</Text>
-        </Pressable>
-        <View style={styles.dayHeading}>
-          <Text style={styles.dayEyebrow}>{t(date === localDateKey(new Date()) ? "planner.today" : "planner.dayPlan")}</Text>
-          <Pressable accessibilityLabel={t("planner.chooseDate")} accessibilityRole="button" onPress={() => setDatePickerOpen(true)}>
-            <Text style={styles.dayDate}>{formatDate(date, locale)}</Text>
-          </Pressable>
-        </View>
-        <Pressable
-          accessibilityLabel={t("app.nextDay")}
-          accessibilityRole="button"
-          onPress={() => changeDay(1)}
-          style={styles.dayArrow}
-        >
-          <Text style={styles.dayArrowText}>›</Text>
+      <View style={styles.dateStripHeader}>
+        <Pressable accessibilityLabel={t("planner.chooseDate")} accessibilityRole="button" onPress={() => setDatePickerOpen(true)} style={styles.monthPicker}>
+          <Text style={styles.monthLabel}>{monthLabel}</Text>
+          <Text style={styles.monthChevron}>⌄</Text>
         </Pressable>
       </View>
+      <ScrollView
+        key={dateStrip[0]}
+        ref={dateStripRef}
+        contentOffset={{ x: Math.max(0, selectedDayIndex * DATE_STRIP_ITEM_INTERVAL), y: 0 }}
+        contentContainerStyle={[styles.dateStrip, { paddingHorizontal: Math.max(0, (dateStripWidth - 48) / 2) }]}
+        decelerationRate="fast"
+        horizontal
+        onLayout={(event) => setDateStripWidth(event.nativeEvent.layout.width)}
+        snapToAlignment="start"
+        snapToInterval={DATE_STRIP_ITEM_INTERVAL}
+        showsHorizontalScrollIndicator={false}
+      >
+        {dateStrip.map((dayKey) => {
+          const [year, month, day] = dayKey.split("-").map(Number);
+          const stripDate = new Date(year, month - 1, day, 12);
+          const isSelected = dayKey === date;
+          const isToday = dayKey === today;
+          const weekday = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(stripDate).replace(/\.$/, "");
+          const accessibilityDate = new Intl.DateTimeFormat(locale, { dateStyle: "full" }).format(stripDate);
+          return (
+            <Pressable
+              key={dayKey}
+              accessibilityLabel={accessibilityDate}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+              onPress={() => setDate(dayKey)}
+              style={[styles.dateButton, isSelected && styles.selectedDateButton, isToday && !isSelected && styles.todayDateButton]}
+            >
+              <Text style={[styles.weekdayText, isSelected && styles.selectedDateText, isToday && !isSelected && styles.todayDateText]}>{weekday}</Text>
+              <Text style={[styles.dayNumberText, isSelected && styles.selectedDateText, isToday && !isSelected && styles.todayDateText]}>{day}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
+      <View {...daySwipeResponder.panHandlers}>
+      <Animated.View style={{ opacity: dayTransition, transform: [{ translateX: dayOffset }] }}>
       {isLoading ? (
         <View style={styles.skeletonList}>
           {[0, 1, 2, 3].map((item) => <View key={item} style={styles.skeletonMeal}>
@@ -192,17 +227,23 @@ function DailyNutritionSummary({ mealTypes, styles, t }: { mealTypes: NonNullabl
   );
 }
 
-function createStyles(colors: { background: string; blue: string; danger: string; muted: string; orange: string; primary: string; surface: string; surfaceAlt: string; text: string }) {
+function createStyles(colors: { background: string; blue: string; danger: string; muted: string; orange: string; primary: string; primaryText: string; surface: string; surfaceAlt: string; text: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "flex-start" },
     backButton: { alignItems: "flex-start", justifyContent: "center", minHeight: 44, paddingRight: 12 },
     backText: { color: colors.primary, fontSize: 15, fontWeight: "600" },
-    dayPicker: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
-    dayArrow: { alignItems: "center", height: 44, justifyContent: "center", width: 44 },
-    dayArrowText: { color: colors.primary, fontSize: 30, fontWeight: "400", lineHeight: 34, marginTop: -3 },
-    dayHeading: { alignItems: "center", flex: 1, paddingHorizontal: 6 },
-    dayEyebrow: { color: colors.orange, fontSize: 10, fontWeight: "700", letterSpacing: 1.8 },
-    dayDate: { color: colors.text, fontSize: 15, fontWeight: "600", marginTop: 3, textAlign: "center" },
+    dateStripHeader: { alignItems: "center", flexDirection: "row", justifyContent: "flex-end", marginTop: 16 },
+    monthPicker: { alignItems: "center", flexDirection: "row", gap: 5, minHeight: 36, paddingHorizontal: 4 },
+    monthLabel: { color: colors.muted, fontSize: 13, fontWeight: "600", textTransform: "capitalize" },
+    monthChevron: { color: colors.primary, fontSize: 18, lineHeight: 22 },
+    dateStrip: { gap: 8, paddingVertical: 4 },
+    dateButton: { alignItems: "center", backgroundColor: "transparent", borderRadius: 13, height: 62, justifyContent: "center", marginRight: 0, width: 48 },
+    selectedDateButton: { backgroundColor: colors.primary },
+    todayDateButton: { backgroundColor: colors.orange },
+    weekdayText: { color: colors.muted, fontSize: 11, fontWeight: "600", textTransform: "uppercase" },
+    dayNumberText: { color: colors.text, fontSize: 16, fontWeight: "700", marginTop: 4 },
+    selectedDateText: { color: colors.primaryText },
+    todayDateText: { color: colors.primaryText },
     skeletonList: { gap: 10, marginTop: 18 },
     skeletonMeal: { borderBottomColor: colors.surfaceAlt, borderBottomWidth: 1, gap: 10, paddingHorizontal: 4, paddingVertical: 14 },
     muted: { color: colors.muted, fontSize: 14 },

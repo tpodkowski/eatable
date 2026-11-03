@@ -18,6 +18,15 @@ export function shiftDate(dateKey: string, amount: number) {
   return localDateKey(date);
 }
 
+export function getDateStrip(dateKey: string, weeksAround = 2) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const selectedDate = new Date(year, month - 1, day, 12);
+  const mondayOffset = (selectedDate.getDay() + 6) % 7;
+  const firstDate = shiftDate(dateKey, -mondayOffset - weeksAround * 7);
+  const dayCount = (weeksAround * 2 + 1) * 7;
+  return Array.from({ length: dayCount }, (_, index) => shiftDate(firstDate, index));
+}
+
 export function formatDate(dateKey: string, locale: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
   const date = new Date(year, month - 1, day, 12);

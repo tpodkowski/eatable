@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import type { MealEntry } from "@eatable/shared";
+import type { MealEntry, UserProfile } from "@eatable/shared";
 import type { ScrollViewInstance } from "react-native";
 import { Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
@@ -13,8 +13,11 @@ import { MealCard } from "./MealCard";
 import { AddMealEntryModal } from "./AddMealEntryModal";
 import { DatePickerModal } from "./DatePickerModal";
 import { useDailyMeals } from "./useDailyMeals";
+import { fetchUserProfile } from "../../lib/profile-api";
+import { MacroProgress } from "../../components/MacroProgress";
 
 const ADD_EMOJIS = ["🍎", "🍉", "🍌", "🥑", "🍔", "🍕", "🧀", "🥗", "🍖", "🍹"];
+const DATE_STRIP_ITEM_WIDTH = 48;
 const DATE_STRIP_ITEM_INTERVAL = 56;
 
 export function DailyPlanScreen() {
@@ -26,6 +29,7 @@ export function DailyPlanScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: session } = authClient.useSession();
   const { date, setDate, dailyMeals, isLoading, error, addEntry, editEntry, removeEntry } = useDailyMeals(session?.user.id, routeDate);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<{ mealTypeId: string; entry: MealEntry } | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -35,6 +39,9 @@ export function DailyPlanScreen() {
   const dayOffset = useRef(new Animated.Value(0)).current;
   const [stripAnchor, setStripAnchor] = useState(date);
   const [dateStripWidth, setDateStripWidth] = useState(0);
+  const dateStripItemInterval = dateStripWidth > DATE_STRIP_ITEM_WIDTH
+    ? (dateStripWidth - DATE_STRIP_ITEM_WIDTH) / Math.max(1, Math.round((dateStripWidth - DATE_STRIP_ITEM_WIDTH) / DATE_STRIP_ITEM_INTERVAL))
+    : DATE_STRIP_ITEM_INTERVAL;
   const dateStripRef = useRef<ScrollViewInstance>(null);
   const locale = i18n.resolvedLanguage === "pl" ? "pl-PL" : "en-US";
   const dateStrip = useMemo(() => getDateStrip(stripAnchor), [stripAnchor]);
@@ -47,13 +54,22 @@ export function DailyPlanScreen() {
     if (routeDate) setDate(routeDate);
   }, [routeDate, setDate]);
   useEffect(() => {
+    if (!session?.user.id) {
+      setProfile(null);
+      return;
+    }
+    let active = true;
+    void fetchUserProfile().then((value) => { if (active) setProfile(value); }).catch(() => { if (active) setProfile(null); });
+    return () => { active = false; };
+  }, [session?.user.id]);
+  useEffect(() => {
     if (!dateStrip.includes(date)) setStripAnchor(date);
   }, [date, dateStrip]);
   useEffect(() => {
     if (selectedDayIndex >= 0) {
-      dateStripRef.current?.scrollTo({ x: selectedDayIndex * DATE_STRIP_ITEM_INTERVAL, y: 0, animated: true });
+      dateStripRef.current?.scrollTo({ x: selectedDayIndex * dateStripItemInterval, y: 0, animated: true });
     }
-  }, [date, dateStrip, selectedDayIndex]);
+  }, [date, dateStrip, dateStripItemInterval, selectedDayIndex]);
   const changeDay = useCallback((offset: number) => {
     Animated.parallel([
       Animated.timing(dayTransition, { toValue: 0, duration: 110, useNativeDriver: true }),
@@ -124,13 +140,13 @@ export function DailyPlanScreen() {
         style={styles.dateStripScroll}
         key={dateStrip[0]}
         ref={dateStripRef}
-        contentOffset={{ x: Math.max(0, selectedDayIndex * DATE_STRIP_ITEM_INTERVAL), y: 0 }}
-        contentContainerStyle={[styles.dateStrip, { paddingHorizontal: Math.max(0, (dateStripWidth - 48) / 2) }]}
+        contentOffset={{ x: Math.max(0, selectedDayIndex * dateStripItemInterval), y: 0 }}
+        contentContainerStyle={[styles.dateStrip, { gap: dateStripItemInterval - DATE_STRIP_ITEM_WIDTH, paddingHorizontal: Math.max(0, (dateStripWidth - DATE_STRIP_ITEM_WIDTH) / 2) }]}
         decelerationRate="fast"
         horizontal
         onLayout={(event) => setDateStripWidth(event.nativeEvent.layout.width)}
         snapToAlignment="start"
-        snapToInterval={DATE_STRIP_ITEM_INTERVAL}
+        snapToInterval={dateStripItemInterval}
         showsHorizontalScrollIndicator={false}
       >
         {dateStrip.map((dayKey) => {
@@ -182,7 +198,7 @@ export function DailyPlanScreen() {
             />
           ))}
         </View>
-        {dailyMeals ? <DailyNutritionSummary mealTypes={dailyMeals.mealTypes} styles={styles} t={t} /> : null}
+        {dailyMeals ? <DailyNutritionSummary mealTypes={dailyMeals.mealTypes} profile={profile} styles={styles} t={t} colors={colors} /> : null}
         </>
       )}
       </Animated.View>
@@ -213,7 +229,7 @@ export function DailyPlanScreen() {
   );
 }
 
-function DailyNutritionSummary({ mealTypes, styles, t }: { mealTypes: NonNullable<ReturnType<typeof useDailyMeals>["dailyMeals"]>["mealTypes"]; styles: ReturnType<typeof createStyles>; t: (key: string) => string }) {
+function DailyNutritionSummary({ mealTypes, profile, styles, t, colors }: { mealTypes: NonNullable<ReturnType<typeof useDailyMeals>["dailyMeals"]>["mealTypes"]; profile: UserProfile | null; styles: ReturnType<typeof createStyles>; t: (key: string) => string; colors: { blue: string; orange: string; pink: string } }) {
   const entries = mealTypes.flatMap((mealType) => mealType.entries);
   const total = (key: "calories" | "protein" | "carbohydrates" | "fat") => entries.reduce((sum, entry) => sum + (entry[key] ?? 0), 0);
   return (
@@ -221,11 +237,16 @@ function DailyNutritionSummary({ mealTypes, styles, t }: { mealTypes: NonNullabl
       <Text style={styles.summaryTitle}>{t("planner.dayTotal")}</Text>
       <Text style={styles.summaryCalories}>{total("calories")} kcal</Text>
       <Text style={styles.summaryMacros}>{t("planner.proteinShort")} {total("protein")} g  ·  {t("planner.carbohydratesShort")} {total("carbohydrates")} g  ·  {t("planner.fatShort")} {total("fat")} g</Text>
+      {profile ? <MacroProgress diameter={58} items={[
+        { key: "protein", label: t("planner.proteinShort"), consumed: total("protein"), target: profile.dailyProteinLimit, color: colors.blue },
+        { key: "fat", label: t("planner.fatShort"), consumed: total("fat"), target: profile.dailyFatLimit, color: colors.pink },
+        { key: "carbohydrates", label: t("planner.carbohydratesShort"), consumed: total("carbohydrates"), target: profile.dailyCarbohydratesLimit, color: colors.orange },
+      ]} /> : null}
     </View>
   );
 }
 
-function createStyles(colors: { background: string; border: string; blue: string; danger: string; muted: string; orange: string; primary: string; primaryText: string; surface: string; surfaceAlt: string; text: string }) {
+function createStyles(colors: { background: string; border: string; blue: string; danger: string; muted: string; orange: string; pink: string; primary: string; primaryText: string; surface: string; surfaceAlt: string; text: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: -8, minHeight: 36 },
     backButton: { alignItems: "flex-start", justifyContent: "center", minHeight: 26, paddingRight: 8 },
@@ -233,7 +254,7 @@ function createStyles(colors: { background: string; border: string; blue: string
     monthPicker: { alignItems: "center", flexDirection: "row", gap: 5, minHeight: 36, paddingHorizontal: 4 },
     monthLabel: { color: colors.muted, fontSize: 13, fontWeight: "600", textTransform: "capitalize" },
     monthChevron: { color: colors.primary, fontSize: 18, includeFontPadding: false, lineHeight: 18, textAlignVertical: "center" },
-    dateStripScroll: { marginVertical: 8 },
+    dateStripScroll: { marginHorizontal: -16, marginVertical: 8 },
     dateStrip: { gap: 8, paddingVertical: 4 },
     dateButton: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 13, borderWidth: 1, height: 62, justifyContent: "center", marginRight: 0, width: 48 },
     selectedDateButton: { backgroundColor: colors.primary, borderColor: colors.primary },

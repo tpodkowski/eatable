@@ -11,7 +11,7 @@ import { useAppTheme } from "../../providers/AppThemeProvider";
 import { useDailyMeals } from "../meals/useDailyMeals";
 import { getNextMeal } from "../meals/meal-schedule";
 import { mealNameKey } from "../../lib/meal-name";
-import { MacroProgress } from "./MacroProgress";
+import { MacroProgress } from "../../components/MacroProgress";
 import { useDashboardProfile } from "./useDashboardProfile";
 import { useTomorrowMeals } from "./useTomorrowMeals";
 

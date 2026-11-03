@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getProgressRatio } from "./macro-progress.ts";
+import { getProgressRatio } from "../../lib/macro-progress.ts";
 
 describe("dashboard macro progress", () => {
   it("calculates the consumed share of a daily target", () => {

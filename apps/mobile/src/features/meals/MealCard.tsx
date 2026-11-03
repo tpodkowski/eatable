@@ -47,7 +47,6 @@ export function MealCard({ mealType, onEditEntry }: { mealType: DailyMealType; o
             <Pressable key={entry.id} accessibilityRole="button" accessibilityLabel={t("planner.editEntry", { title: entry.title })} onPress={() => onEditEntry(entry)} style={styles.entry}>
               <View style={styles.entryHeading}>
                 <Text style={styles.entryTitle}>{entry.title}</Text>
-                <Text style={styles.entryType}>{t(entry.type === "product" ? "planner.product" : "planner.dish")}</Text>
               </View>
               {entry.quantity ? <Text style={styles.entryQuantity}>{entry.quantity}</Text> : null}
               {entry.notes ? <Text style={styles.entryNotes}>{entry.notes}</Text> : null}
@@ -79,7 +78,7 @@ function NutritionSummary({ total, t, styles }: { total: (key: "calories" | "pro
   );
 }
 
-function createStyles(colors: { blue: string; border: string; divider: string; muted: string; subtle: string; text: string; violet: string; surface: string }) {
+function createStyles(colors: { blue: string; border: string; divider: string; muted: string; subtle: string; text: string; surface: string }) {
   return StyleSheet.create({
     card: { borderBottomColor: colors.border, borderBottomWidth: 1, paddingHorizontal: 4, paddingVertical: 12 },
     heading: { alignItems: "center", flexDirection: "row", minHeight: 28 },
@@ -92,7 +91,6 @@ function createStyles(colors: { blue: string; border: string; divider: string; m
     entry: { borderTopColor: colors.divider, borderTopWidth: 1, marginTop: 10, paddingTop: 9 },
     entryHeading: { alignItems: "center", flexDirection: "row", gap: 10, justifyContent: "space-between" },
     entryTitle: { color: colors.text, flex: 1, fontSize: 14, fontWeight: "600" },
-    entryType: { color: colors.violet, fontSize: 11, fontWeight: "600" },
     entryQuantity: { color: colors.muted, fontSize: 12, marginTop: 4 },
     entryNotes: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 3 },
   });

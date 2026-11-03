@@ -4,6 +4,7 @@ const APP_MIGRATION_ID = "2026-11-02-user-meals";
 const MEAL_ENTRY_DETAILS_MIGRATION_ID = "2026-11-02-meal-entry-details";
 const MEAL_ENTRY_MACROS_MIGRATION_ID = "2026-11-02-meal-entry-macros";
 const MEAL_TYPE_TIMES_MIGRATION_ID = "2026-11-02-meal-type-times";
+const MEAL_ENTRY_PRODUCTS_ONLY_MIGRATION_ID = "2026-11-03-meal-entry-products-only";
 
 const createMealTables = `
 CREATE TABLE user_meal_settings (
@@ -44,7 +45,6 @@ CREATE INDEX user_meal_types_user_order_idx
 
 const addMealEntryDetails = `
 ALTER TABLE meal_entries
-  ADD COLUMN item_type text NOT NULL DEFAULT 'dish' CHECK (item_type IN ('dish', 'product')),
   ADD COLUMN quantity text CHECK (quantity IS NULL OR char_length(quantity) BETWEEN 1 AND 60);
 `;
 const addMealEntryMacros = `
@@ -100,6 +100,12 @@ export async function runAppMigrations(pool: Pool) {
         ALTER TABLE user_meal_types ALTER COLUMN meal_time SET NOT NULL;
       `);
       await client.query("INSERT INTO app_migrations (id) VALUES ($1)", [MEAL_TYPE_TIMES_MIGRATION_ID]);
+    }
+
+    const productsOnlyMigration = await client.query("SELECT 1 FROM app_migrations WHERE id = $1", [MEAL_ENTRY_PRODUCTS_ONLY_MIGRATION_ID]);
+    if (productsOnlyMigration.rowCount === 0) {
+      await client.query("ALTER TABLE meal_entries DROP COLUMN IF EXISTS item_type");
+      await client.query("INSERT INTO app_migrations (id) VALUES ($1)", [MEAL_ENTRY_PRODUCTS_ONLY_MIGRATION_ID]);
     }
 
     await client.query("COMMIT");

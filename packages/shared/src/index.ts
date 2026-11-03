@@ -6,7 +6,6 @@ export interface HealthResponse {
 
 export interface MealEntry {
   id: string;
-  type: "dish" | "product";
   title: string;
   quantity: string | null;
   notes: string | null;
@@ -19,7 +18,6 @@ export interface MealEntry {
 
 export interface CreateMealEntryInput {
   date: string;
-  type: MealEntry["type"];
   title: string;
   quantity?: string;
   notes?: string;

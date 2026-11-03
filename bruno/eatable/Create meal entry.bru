@@ -18,7 +18,6 @@ headers {
 body:json {
   {
     "date": "{{date}}",
-    "type": "dish",
     "title": "Oatmeal with berries",
     "quantity": "250 g",
     "notes": "Made with milk",
@@ -27,14 +26,13 @@ body:json {
 }
 
 docs {
-  Add a product or dish to one of the signed-in user's meal categories for a date.
+  Add a product to one of the signed-in user's meal categories for a date.
 
-  Required fields: date (YYYY-MM-DD), type (dish or product), and title. Quantity, notes, and calories are optional.
+  Required fields: date (YYYY-MM-DD) and title. Quantity, notes, and nutrition details are optional.
 
   Example response (201):
   {
     "id": "b7906b25-4d20-465c-bbca-f5a922c4edb9",
-    "type": "dish",
     "title": "Oatmeal with berries",
     "quantity": "250 g",
     "notes": "Made with milk",

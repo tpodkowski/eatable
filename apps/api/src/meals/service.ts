@@ -37,7 +37,7 @@ export async function getDailyMeals(pool: Pool, userId: string, date: string): P
     `SELECT meal_type.id, meal_type.name, meal_type.sort_order AS "sortOrder",
        to_char(meal_type.meal_time, 'HH24:MI') AS "mealTime",
        COALESCE(json_agg(json_build_object(
-         'id', entry.id, 'type', entry.item_type, 'title', entry.title, 'quantity', entry.quantity,
+         'id', entry.id, 'title', entry.title, 'quantity', entry.quantity,
          'notes', entry.notes, 'calories', entry.calories, 'protein', entry.protein,
          'carbohydrates', entry.carbohydrates, 'fat', entry.fat, 'createdAt', entry.created_at
        ) ORDER BY entry.created_at) FILTER (WHERE entry.id IS NOT NULL), '[]'::json) AS entries
@@ -55,14 +55,14 @@ export async function createMealEntry(
   pool: Pool,
   userId: string,
   mealTypeId: string,
-  data: { date: string; type: MealEntry["type"]; title: string; quantity: string | null; notes: string | null; calories: number | null; protein: number | null; carbohydrates: number | null; fat: number | null },
+  data: { date: string; title: string; quantity: string | null; notes: string | null; calories: number | null; protein: number | null; carbohydrates: number | null; fat: number | null },
 ): Promise<MealEntry | null> {
   const result = await pool.query<MealEntry>(
-    `INSERT INTO meal_entries (user_id, meal_type_id, meal_date, item_type, title, quantity, notes, calories, protein, carbohydrates, fat)
-     SELECT $1, meal_type.id, $3::date, $4, $5, $6, $7, $8, $9, $10, $11
+    `INSERT INTO meal_entries (user_id, meal_type_id, meal_date, title, quantity, notes, calories, protein, carbohydrates, fat)
+     SELECT $1, meal_type.id, $3::date, $4, $5, $6, $7, $8, $9, $10
      FROM user_meal_types AS meal_type WHERE meal_type.user_id = $1 AND meal_type.id = $2
-     RETURNING id, item_type AS type, title, quantity, notes, calories, protein, carbohydrates, fat, created_at AS "createdAt"`,
-    [userId, mealTypeId, data.date, data.type, data.title, data.quantity, data.notes, data.calories, data.protein, data.carbohydrates, data.fat],
+     RETURNING id, title, quantity, notes, calories, protein, carbohydrates, fat, created_at AS "createdAt"`,
+    [userId, mealTypeId, data.date, data.title, data.quantity, data.notes, data.calories, data.protein, data.carbohydrates, data.fat],
   );
   return result.rows[0] ?? null;
 }
@@ -72,14 +72,14 @@ export async function updateMealEntry(
   userId: string,
   mealTypeId: string,
   entryId: string,
-  data: { date: string; type: MealEntry["type"]; title: string; quantity: string | null; notes: string | null; calories: number | null; protein: number | null; carbohydrates: number | null; fat: number | null },
+  data: { date: string; title: string; quantity: string | null; notes: string | null; calories: number | null; protein: number | null; carbohydrates: number | null; fat: number | null },
 ): Promise<MealEntry | null> {
   const result = await pool.query<MealEntry>(
-    `UPDATE meal_entries SET item_type = $4, title = $5, quantity = $6, notes = $7,
-       calories = $8, protein = $9, carbohydrates = $10, fat = $11, updated_at = now()
-     WHERE user_id = $1 AND meal_type_id = $2 AND id = $3 AND meal_date = $12::date
-     RETURNING id, item_type AS type, title, quantity, notes, calories, protein, carbohydrates, fat, created_at AS "createdAt"`,
-    [userId, mealTypeId, entryId, data.type, data.title, data.quantity, data.notes, data.calories, data.protein, data.carbohydrates, data.fat, data.date],
+    `UPDATE meal_entries SET title = $4, quantity = $5, notes = $6,
+       calories = $7, protein = $8, carbohydrates = $9, fat = $10, updated_at = now()
+     WHERE user_id = $1 AND meal_type_id = $2 AND id = $3 AND meal_date = $11::date
+     RETURNING id, title, quantity, notes, calories, protein, carbohydrates, fat, created_at AS "createdAt"`,
+    [userId, mealTypeId, entryId, data.title, data.quantity, data.notes, data.calories, data.protein, data.carbohydrates, data.fat, data.date],
   );
   return result.rows[0] ?? null;
 }

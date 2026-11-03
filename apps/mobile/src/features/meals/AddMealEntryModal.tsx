@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import type { CreateMealEntryInput, DailyMealType, MealEntry } from "@eatable/shared";
 import { useTranslation } from "react-i18next";
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
 import { formatDate } from "../../lib/dates";
 import { mealNameKey } from "../../lib/meal-name";
@@ -26,16 +27,24 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [selectedMealTypeId, setSelectedMealTypeId] = useState<string | null>(null);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [formFooter, setFormFooter] = useState<ReactNode>(null);
 
   useEffect(() => {
     if (visible) {
       setSelectedMealTypeId(editingEntry?.mealTypeId ?? null);
       setSelectedEntryId(editingEntry?.entry.id ?? null);
+      setFormFooter(null);
     }
   }, [visible, editingEntry]);
 
   const selectedMealType = mealTypes.find((mealType) => mealType.id === selectedMealTypeId);
   const selectedEntry = selectedMealType?.entries.find((entry) => entry.id === selectedEntryId);
+  const deleteEntry = useCallback((entry: MealEntry) => {
+    if (!selectedMealTypeId) return;
+    void onDelete(selectedMealTypeId, entry).catch(() => {
+      Alert.alert(t("errors.entryDeleteFailed"));
+    });
+  }, [onDelete, selectedMealTypeId, t]);
 
   return (
     <Modal
@@ -44,12 +53,13 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
       presentationStyle={Platform.OS === "ios" ? "pageSheet" : "fullScreen"}
       visible={visible}
     >
-      <AppScreen>
+      <AppScreen footer={formFooter}>
         <View style={styles.header}>
           <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeText}>{t("app.back")}</Text>
           </Pressable>
           <Text style={styles.date}>{formatDate(date, locale)}</Text>
+          <View style={styles.headerAction} />
         </View>
         <Text style={styles.title}>{t(selectedEntry ? "planner.editEntryTitle" : "planner.addEntryTitle")}</Text>
         <Text style={styles.description}>{t(selectedEntry ? "planner.editEntryDescription" : "planner.chooseMeal")}</Text>
@@ -80,16 +90,24 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
             {selectedMealType.entries.map((entry) => {
               const selected = selectedEntryId === entry.id;
               return (
-                <Pressable
-                  key={entry.id}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  onPress={() => setSelectedEntryId(entry.id)}
-                  style={[styles.entryOption, selected && styles.mealOptionActive]}
-                >
-                  <Text style={[styles.mealOptionText, selected && styles.mealOptionTextActive]}>{entry.title}</Text>
-                  <Text style={styles.entryType}>{t(entry.type === "product" ? "planner.product" : "planner.dish")}</Text>
-                </Pressable>
+                <View key={entry.id} style={[styles.entryOption, selected && styles.mealOptionActive]}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => setSelectedEntryId(entry.id)}
+                    style={styles.entrySelect}
+                  >
+                    <Text numberOfLines={1} style={[styles.mealOptionText, selected && styles.mealOptionTextActive]}>{entry.title}</Text>
+                  </Pressable>
+                  <Pressable
+                    accessibilityLabel={`${t("planner.deleteEntry")}: ${entry.title}`}
+                    accessibilityRole="button"
+                    onPress={() => deleteEntry(entry)}
+                    style={styles.entryDeleteButton}
+                  >
+                    <Text style={styles.deleteText}>✕</Text>
+                  </Pressable>
+                </View>
               );
             })}
             <Pressable accessibilityRole="button" onPress={() => setSelectedEntryId(null)} style={styles.addAnother}>
@@ -102,11 +120,11 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
           <MealEntryForm
             key={selectedEntry?.id ?? `new-${selectedMealTypeId}`}
             initialEntry={selectedEntry}
-            onDelete={selectedEntry ? () => onDelete(selectedMealTypeId, selectedEntry) : undefined}
             onSave={(entry) => selectedEntry
               ? onUpdate(selectedMealTypeId, selectedEntry, entry)
               : onSave(selectedMealTypeId, entry)}
             onCancel={onClose}
+            onFooterChange={setFormFooter}
           />
         ) : (
           <Text style={styles.hint}>{t("planner.chooseMealHint")}</Text>
@@ -116,11 +134,12 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
   );
 }
 
-function createStyles(colors: { border: string; muted: string; primary: string; surface: string; surfaceAlt: string; text: string; violet: string }) {
+function createStyles(colors: { border: string; danger: string; muted: string; primary: string; surface: string; surfaceAlt: string; text: string; violet: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
     closeButton: { alignSelf: "flex-start", paddingVertical: 8, paddingRight: 12 },
     closeText: { color: colors.primary, fontSize: 15, fontWeight: "600" },
+    headerAction: { alignItems: "flex-end", minWidth: 52 },
     date: { color: colors.muted, fontSize: 13 },
     title: { color: colors.text, fontSize: 34, fontWeight: "700", letterSpacing: -1, lineHeight: 40, marginTop: 24 },
     description: { color: colors.muted, fontSize: 15, lineHeight: 22, marginTop: 8 },
@@ -132,7 +151,9 @@ function createStyles(colors: { border: string; muted: string; primary: string; 
     entriesSection: { gap: 8, marginTop: 20 },
     entriesLabel: { color: colors.text, fontSize: 13, fontWeight: "600" },
     entryOption: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 12, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", minHeight: 42, paddingHorizontal: 12 },
-    entryType: { color: colors.violet, fontSize: 11, fontWeight: "600" },
+    entrySelect: { flex: 1, justifyContent: "center", minHeight: 42, paddingRight: 8 },
+    entryDeleteButton: { alignItems: "center", justifyContent: "center", minHeight: 40, minWidth: 40 },
+    deleteText: { color: colors.danger, fontSize: 17, fontWeight: "700" },
     addAnother: { alignSelf: "flex-start", paddingVertical: 8 },
     addAnotherText: { color: colors.primary, fontSize: 14, fontWeight: "600" },
     hint: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: 24 },

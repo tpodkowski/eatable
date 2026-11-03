@@ -83,7 +83,7 @@ export function DashboardScreen() {
         style={({ pressed }) => [styles.nextMeal, pressed && styles.pressed]}
       >
         <Text style={styles.nextMealLabel}>{t("dashboard.nextMeal")}</Text>
-        {isLoading || (nextMeal?.tomorrow && !tomorrowMeals) ? <View style={styles.nextMealSkeleton}><SkeletonBlock width="65%" height={20} color={colors.surfaceAlt} /><SkeletonBlock width="90%" height={13} color={colors.surfaceAlt} /></View> : displayedNextMeal ? (
+        {isLoading || (nextMeal?.tomorrow && !tomorrowMeals) ? <View style={styles.nextMealSkeleton}><SkeletonBlock width="65%" height={18} color={colors.surfaceAlt} /><SkeletonBlock width="90%" height={12} color={colors.surfaceAlt} /></View> : displayedNextMeal ? (
           <>
             <View style={styles.nextMealRow}>
               <Text style={styles.nextMealName}>{mealNameKey(displayedNextMeal.meal.name) ? t(mealNameKey(displayedNextMeal.meal.name)) : displayedNextMeal.meal.name}</Text>
@@ -125,13 +125,13 @@ function createStyles(colors: { blue: string; muted: string; orange: string; pri
     calories: { color: colors.text, fontSize: 48, fontWeight: "700", letterSpacing: -1.5, marginTop: 18 },
     unit: { color: colors.muted, fontSize: 19, fontWeight: "600", letterSpacing: 0 },
     summaryHint: { color: colors.muted, fontSize: 13, marginTop: 5 },
-    nextMeal: { backgroundColor: colors.surface, borderColor: colors.surfaceAlt, borderRadius: 18, borderWidth: 1, marginTop: 14, padding: 18 },
+    nextMeal: { backgroundColor: colors.surface, borderColor: colors.surfaceAlt, borderRadius: 14, borderWidth: 1, marginTop: 12, padding: 12 },
     nextMealLabel: { color: colors.orange, fontSize: 12, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" },
     nextMealRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
-    nextMealName: { color: colors.text, fontSize: 20, fontWeight: "700", marginTop: 10 },
-    nextMealTime: { color: colors.primary, fontSize: 20, fontWeight: "700" },
-    nextMealEntries: { gap: 7, marginTop: 12 },
-    nextMealEntry: { color: colors.text, fontSize: 14, lineHeight: 20 },
+    nextMealName: { color: colors.text, fontSize: 16, fontWeight: "700", marginTop: 6 },
+    nextMealTime: { color: colors.primary, fontSize: 16, fontWeight: "700" },
+    nextMealEntries: { gap: 5, marginTop: 8 },
+    nextMealEntry: { color: colors.text, fontSize: 12, lineHeight: 17 },
     summarySkeleton: { gap: 16, marginTop: 18 },
     nextMealSkeleton: { gap: 12, marginTop: 12 },
     mealsButton: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 18, flexDirection: "row", justifyContent: "space-between", marginTop: 16, minHeight: 82, paddingHorizontal: 20 },

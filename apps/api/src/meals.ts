@@ -28,9 +28,6 @@ export function validateMealEntryInput(input: unknown): MealEntryValidation {
   if (typeof body.date !== "string" || !isValidMealDate(body.date)) {
     return { success: false, error: "invalidDate" };
   }
-  if (body.type !== "dish" && body.type !== "product") {
-    return { success: false, error: "invalidType" };
-  }
   if (typeof body.title !== "string" || body.title.trim().length === 0 || body.title.trim().length > 160) {
     return { success: false, error: "invalidTitle" };
   }
@@ -63,7 +60,6 @@ export function validateMealEntryInput(input: unknown): MealEntryValidation {
     success: true,
     data: {
       date: body.date,
-      type: body.type as MealEntry["type"],
       title: body.title.trim(),
       quantity: typeof quantity === "string" ? quantity.trim() : null,
       notes: typeof notes === "string" && notes.trim().length > 0 ? notes.trim() : null,

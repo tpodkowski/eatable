@@ -30,14 +30,14 @@ services:
       CLIENT_ORIGINS: ${CLIENT_ORIGINS:-}
       HOST: 0.0.0.0
       PORT: 3000
-    expose:
-      - "3000"
+    ports:
+      - "20133:3000"
     depends_on:
       db:
         condition: service_healthy
     networks:
       - internal
-      - edge
+      - outbound
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 15s
@@ -45,30 +45,24 @@ services:
       retries: 5
       start_period: 30s
 
-  caddy:
-    image: caddy:2-alpine
+  web:
+    image: ${WEB_IMAGE_NAME:?Set WEB_IMAGE_NAME in the server .env}:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    environment:
-      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN in the server .env}
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - api
+      - "30133:80"
     networks:
-      - edge
+      - outbound
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   postgres_test_data:
-  caddy_data:
-  caddy_config:
 
 networks:
   internal:
     internal: true
-  edge:
+  outbound:

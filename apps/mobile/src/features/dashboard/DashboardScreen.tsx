@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
-import { BrandLogo } from "../../components/BrandLogo";
 import { SkeletonBlock } from "../../components/SkeletonBlock";
 import { authClient } from "../../lib/auth-client";
 import { localDateKey, shiftDate } from "../../lib/dates";
@@ -54,13 +53,12 @@ export function DashboardScreen() {
   return (
     <AppScreen>
       <View style={styles.header}>
-        <BrandLogo accessibilityLabel={t("app.goToDashboard")} onPress={() => router.replace("/")} />
+        <Text style={styles.date}>{today}</Text>
         <Pressable accessibilityLabel={t("app.openSettings")} accessibilityRole="button" onPress={() => router.push("/settings")} style={styles.avatar}>
           <Text style={styles.avatarText}>{getInitials(session?.user.name || session?.user.email || "")}</Text>
         </Pressable>
       </View>
 
-      <Text style={styles.date}>{today}</Text>
       <Text style={styles.greeting}>{t("dashboard.greeting")} {session?.user.name?.split(" ")[0] ?? ""}</Text>
       <Text style={styles.subtitle}>{t("dashboard.subtitle")}</Text>
 
@@ -115,7 +113,7 @@ export function DashboardScreen() {
 function createStyles(colors: { blue: string; muted: string; orange: string; primary: string; surface: string; surfaceAlt: string; text: string; violet: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-    date: { color: colors.muted, fontSize: 14, marginTop: 24, textTransform: "capitalize" },
+    date: { color: colors.muted, fontSize: 14, textTransform: "capitalize" },
     avatar: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderRadius: 22, height: 44, justifyContent: "center", width: 44 },
     avatarText: { color: colors.violet, fontSize: 14, fontWeight: "700" },
     greeting: { color: colors.text, fontSize: 32, fontWeight: "700", letterSpacing: -0.8, marginTop: 42 },

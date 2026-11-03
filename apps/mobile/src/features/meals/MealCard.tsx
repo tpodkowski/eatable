@@ -88,7 +88,7 @@ function createStyles(colors: { blue: string; border: string; divider: string; m
     mealCalories: { color: colors.blue, fontSize: 14, fontWeight: "600" },
     mealMacros: { color: colors.muted, fontSize: 12, lineHeight: 18 },
     emptyText: { color: colors.subtle, fontSize: 13, marginTop: 10 },
-    entry: { borderTopColor: colors.divider, borderTopWidth: 1, marginTop: 10, paddingTop: 9 },
+    entry: { borderTopColor: colors.divider, borderTopWidth: 1, marginHorizontal: 8, marginTop: 10, paddingTop: 9 },
     entryHeading: { alignItems: "center", flexDirection: "row", gap: 10, justifyContent: "space-between" },
     entryTitle: { color: colors.text, flex: 1, fontSize: 14, fontWeight: "600" },
     entryQuantity: { color: colors.muted, fontSize: 12, marginTop: 4 },

@@ -4,11 +4,9 @@ import { useTranslation } from "react-i18next";
 import type { MealEntry } from "@eatable/shared";
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
-import { BrandLogo } from "../../components/BrandLogo";
 import { SkeletonBlock } from "../../components/SkeletonBlock";
 import { authClient } from "../../lib/auth-client";
 import { formatDate, isValidDateKey, localDateKey, shiftDate } from "../../lib/dates";
-import { getInitials } from "../../lib/initials";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { MealCard } from "./MealCard";
 import { AddMealEntryModal } from "./AddMealEntryModal";
@@ -90,14 +88,13 @@ export function DailyPlanScreen() {
       </Pressable>
     )}>
       <View style={styles.header}>
-        <BrandLogo accessibilityLabel={t("app.goToDashboard")} onPress={() => router.replace("/")} />
         <Pressable
-          accessibilityLabel={t("app.openSettings")}
+          accessibilityLabel={t("app.goToDashboard")}
           accessibilityRole="button"
-          onPress={() => router.push("/settings")}
-          style={styles.avatarButton}
+          onPress={() => router.replace("/")}
+          style={styles.backButton}
         >
-          <Text style={styles.avatarText}>{getInitials(session?.user.name || session?.user.email || "")}</Text>
+          <Text style={styles.backText}>{t("app.back")}</Text>
         </Pressable>
       </View>
 
@@ -195,11 +192,11 @@ function DailyNutritionSummary({ mealTypes, styles, t }: { mealTypes: NonNullabl
   );
 }
 
-function createStyles(colors: { background: string; blue: string; danger: string; muted: string; orange: string; primary: string; surface: string; surfaceAlt: string; text: string; violet: string }) {
+function createStyles(colors: { background: string; blue: string; danger: string; muted: string; orange: string; primary: string; surface: string; surfaceAlt: string; text: string }) {
   return StyleSheet.create({
-    header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-    avatarButton: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderRadius: 22, height: 44, justifyContent: "center", width: 44 },
-    avatarText: { color: colors.violet, fontSize: 14, fontWeight: "700" },
+    header: { alignItems: "center", flexDirection: "row", justifyContent: "flex-start" },
+    backButton: { alignItems: "flex-start", justifyContent: "center", minHeight: 44, paddingRight: 12 },
+    backText: { color: colors.primary, fontSize: 15, fontWeight: "600" },
     dayPicker: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
     dayArrow: { alignItems: "center", height: 44, justifyContent: "center", width: 44 },
     dayArrowText: { color: colors.primary, fontSize: 30, fontWeight: "400", lineHeight: 34, marginTop: -3 },

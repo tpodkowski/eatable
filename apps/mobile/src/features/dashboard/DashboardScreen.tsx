@@ -14,6 +14,8 @@ import { useDailyMeals } from "../meals/useDailyMeals";
 import { getNextMeal } from "../meals/meal-schedule";
 import { mealNameKey } from "../../lib/meal-name";
 import { beginGlobalLoading } from "../../lib/global-loading";
+import type { UserProfile } from "@eatable/shared";
+import { MacroProgress } from "./MacroProgress";
 
 export function DashboardScreen() {
   const router = useRouter();
@@ -24,16 +26,16 @@ export function DashboardScreen() {
   const { dailyMeals, isLoading, error } = useDailyMeals(session?.user.id);
   const [now, setNow] = useState(() => new Date());
   const [tomorrowMeals, setTomorrowMeals] = useState<typeof dailyMeals>(null);
-  const [dailyCalorieLimit, setDailyCalorieLimit] = useState<number | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   useEffect(() => {
     if (!session?.user.id) {
-      setDailyCalorieLimit(null);
+      setProfile(null);
       return;
     }
     let active = true;
     void fetchUserProfile()
-      .then((profile) => { if (active) setDailyCalorieLimit(profile.dailyCalorieLimit); })
-      .catch(() => { if (active) setDailyCalorieLimit(null); });
+      .then((loadedProfile) => { if (active) setProfile(loadedProfile); })
+      .catch(() => { if (active) setProfile(null); });
     return () => { active = false; };
   }, [session?.user.id]);
   useEffect(() => {
@@ -42,6 +44,9 @@ export function DashboardScreen() {
   }, []);
   const entries = dailyMeals?.mealTypes.flatMap((mealType) => mealType.entries) ?? [];
   const calories = entries.reduce((sum, entry) => sum + (entry.calories ?? 0), 0);
+  const protein = entries.reduce((sum, entry) => sum + (entry.protein ?? 0), 0);
+  const carbohydrates = entries.reduce((sum, entry) => sum + (entry.carbohydrates ?? 0), 0);
+  const fat = entries.reduce((sum, entry) => sum + (entry.fat ?? 0), 0);
   const locale = i18n.resolvedLanguage === "pl" ? "pl-PL" : "en-US";
   const today = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" }).format(new Date());
   const nextMeal = getNextMeal(dailyMeals?.mealTypes ?? [], now);
@@ -92,17 +97,24 @@ export function DashboardScreen() {
         {isLoading ? <View style={styles.summarySkeleton}><SkeletonBlock width="48%" height={40} color={colors.surfaceAlt} /><SkeletonBlock width="72%" height={13} color={colors.surfaceAlt} /></View> : (
           <Text style={[
             styles.calories,
-            dailyCalorieLimit !== null && calories > dailyCalorieLimit
+            profile !== null && calories > profile.dailyCalorieLimit
               ? styles.caloriesOverLimit
-              : dailyCalorieLimit !== null && calories < dailyCalorieLimit
+              : profile !== null && calories < profile.dailyCalorieLimit
                 ? styles.caloriesUnderLimit
                 : null,
           ]}>
             {error ? "—" : calories}
-            {dailyCalorieLimit !== null ? <Text style={styles.unit}> / {dailyCalorieLimit} kcal</Text> : <Text style={styles.unit}> kcal</Text>}
+            {profile !== null ? <Text style={styles.unit}> / {profile.dailyCalorieLimit} kcal</Text> : <Text style={styles.unit}> kcal</Text>}
           </Text>
         )}
         <Text style={styles.summaryHint}>{t("dashboard.caloriesHint")}</Text>
+        {!isLoading && !error && profile ? (
+          <MacroProgress items={[
+            { key: "protein", label: t("planner.proteinShort"), consumed: protein, target: profile.dailyProteinLimit, color: colors.blue },
+            { key: "fat", label: t("planner.fatShort"), consumed: fat, target: profile.dailyFatLimit, color: colors.pink },
+            { key: "carbohydrates", label: t("planner.carbohydratesShort"), consumed: carbohydrates, target: profile.dailyCarbohydratesLimit, color: colors.orange },
+          ]} />
+        ) : null}
       </View>
 
       <Pressable
@@ -141,7 +153,7 @@ export function DashboardScreen() {
   );
 }
 
-function createStyles(colors: { border: string; blue: string; danger: string; muted: string; orange: string; primary: string; success: string; surfaceAlt: string; text: string; violet: string }) {
+function createStyles(colors: { border: string; blue: string; danger: string; muted: string; orange: string; pink: string; primary: string; success: string; surfaceAlt: string; text: string; violet: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
     date: { color: colors.muted, fontSize: 14, textTransform: "capitalize" },

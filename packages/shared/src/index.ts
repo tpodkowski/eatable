@@ -6,6 +6,9 @@ export interface HealthResponse {
 
 export interface UserProfile {
   dailyCalorieLimit: number;
+  dailyProteinLimit: number;
+  dailyCarbohydratesLimit: number;
+  dailyFatLimit: number;
 }
 
 export interface MealEntry {

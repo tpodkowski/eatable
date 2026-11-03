@@ -18,13 +18,13 @@ export async function fetchUserProfile(): Promise<UserProfile> {
   return (await response.json()) as UserProfile;
 }
 
-export async function updateDailyCalorieLimit(dailyCalorieLimit: number): Promise<UserProfile> {
+export async function updateUserProfile(profile: UserProfile): Promise<UserProfile> {
   const response = await fetch(`${apiUrl}/api/profile`, {
     method: "PUT",
     credentials: Platform.OS === "web" ? "include" : "omit",
     headers: { "Content-Type": "application/json", ...(await requestHeaders()) },
-    body: JSON.stringify({ dailyCalorieLimit }),
+    body: JSON.stringify(profile),
   });
-  if (!response.ok) throw new Error(response.status === 400 ? "invalidDailyCalorieLimit" : "profileSaveFailed");
+  if (!response.ok) throw new Error(response.status === 400 ? "invalidUserProfile" : "profileSaveFailed");
   return (await response.json()) as UserProfile;
 }

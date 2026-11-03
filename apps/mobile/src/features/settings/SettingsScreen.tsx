@@ -7,7 +7,9 @@ import { AppScreen } from "../../components/AppScreen";
 import { authErrorKey } from "../../lib/auth-errors";
 import { authClient } from "../../lib/auth-client";
 import { readLanguagePreference, saveLanguagePreference } from "../../lib/preferences";
-import { fetchUserProfile, updateDailyCalorieLimit } from "../../lib/profile-api";
+import { fetchUserProfile, updateUserProfile } from "../../lib/profile-api";
+import type { UserProfile } from "@eatable/shared";
+import { isValidUserProfile, updateProfileFromCalories, updateProfileFromMacro } from "./profile-form";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import type { AppLanguage } from "../../i18n/translations";
 
@@ -20,10 +22,11 @@ export function SettingsScreen() {
   const [language, setLanguage] = useState<AppLanguage>(i18n.resolvedLanguage === "en" ? "en" : "pl");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [dailyCalorieLimit, setDailyCalorieLimit] = useState("2000");
+  const [profile, setProfile] = useState<UserProfile>({ dailyCalorieLimit: 2000, dailyProteinLimit: 100, dailyCarbohydratesLimit: 250, dailyFatLimit: 67 });
   const [profileBusy, setProfileBusy] = useState(false);
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const initialLimitLoaded = useRef(false);
+  const savedProfile = useRef<UserProfile>(profile);
   const latestSave = useRef(0);
 
   useEffect(() => {
@@ -32,8 +35,9 @@ export function SettingsScreen() {
     void fetchUserProfile()
       .then((profile) => {
         if (active) {
+          savedProfile.current = profile;
           initialLimitLoaded.current = true;
-          setDailyCalorieLimit(String(profile.dailyCalorieLimit));
+          setProfile(profile);
         }
       })
       .catch(() => { if (active) setProfileMessage("errors.profileLoadFailed"); });
@@ -79,24 +83,32 @@ export function SettingsScreen() {
 
   useEffect(() => {
     if (!session || !initialLimitLoaded.current) return;
-    const value = Number(dailyCalorieLimit);
-    if (!/^\d+$/.test(dailyCalorieLimit) || !Number.isInteger(value) || value < 1 || value > 100_000) {
+    if (JSON.stringify(profile) === JSON.stringify(savedProfile.current)) {
+      latestSave.current += 1;
       setProfileBusy(false);
-      setProfileMessage("errors.invalidDailyCalorieLimit");
+      setProfileMessage(null);
+      return;
+    }
+    if (!isValidUserProfile(profile)) {
+      setProfileBusy(false);
+      setProfileMessage("errors.invalidUserProfile");
       return;
     }
     const saveId = ++latestSave.current;
     setProfileBusy(true);
     setProfileMessage(null);
     const timeout = setTimeout(() => {
-      void updateDailyCalorieLimit(value)
+      void updateUserProfile(profile)
         .then(() => {
-          if (latestSave.current === saveId) setProfileMessage("settings.calorieLimitSaved");
+          if (latestSave.current === saveId) {
+            savedProfile.current = profile;
+            setProfileMessage("settings.profileSaved");
+          }
         })
         .catch((error) => {
           if (latestSave.current === saveId) {
-            setProfileMessage(error instanceof Error && error.message === "invalidDailyCalorieLimit"
-              ? "errors.invalidDailyCalorieLimit"
+            setProfileMessage(error instanceof Error && error.message === "invalidUserProfile"
+              ? "errors.invalidUserProfile"
               : "errors.profileSaveFailed");
           }
         })
@@ -105,7 +117,15 @@ export function SettingsScreen() {
         });
     }, 500);
     return () => clearTimeout(timeout);
-  }, [dailyCalorieLimit, session]);
+  }, [profile, session]);
+
+  function changeCalories(raw: string) {
+    setProfile((current) => updateProfileFromCalories(current, raw));
+  }
+
+  function changeMacro(key: "dailyProteinLimit" | "dailyCarbohydratesLimit" | "dailyFatLimit", raw: string) {
+    setProfile((current) => updateProfileFromMacro(current, key, raw));
+  }
 
   return (
     <AppScreen>
@@ -129,16 +149,26 @@ export function SettingsScreen() {
 
       {session ? (
         <View style={styles.calorieLimitSection}>
+          <Text style={styles.goalHeading}>{t("settings.yourGoal")}</Text>
           <Text style={styles.preferenceLabel}>{t("settings.dailyCalorieLimit")}</Text>
           <TextInput
             accessibilityLabel={t("settings.dailyCalorieLimit")}
             keyboardType="number-pad"
-            value={dailyCalorieLimit}
-            onChangeText={setDailyCalorieLimit}
+            value={String(profile.dailyCalorieLimit)}
+            onChangeText={changeCalories}
             style={styles.calorieLimitInput}
             maxLength={6}
           />
-          {profileMessage ? <Text accessibilityRole={profileMessage === "settings.calorieLimitSaved" ? "text" : "alert"} style={profileMessage === "settings.calorieLimitSaved" ? styles.success : styles.error}>{t(profileMessage)}</Text> : profileBusy ? <Text style={styles.saveStatus}>{t("settings.savingCalorieLimit")}</Text> : null}
+          <View style={styles.macroLimitInputs}>
+          {(["dailyProteinLimit", "dailyFatLimit", "dailyCarbohydratesLimit"] as const).map((key) => (
+            <View key={key} style={styles.macroLimitRow}>
+              <Text style={styles.preferenceLabel}>{t(`settings.${key}`)}</Text>
+              <TextInput accessibilityLabel={t(`settings.${key}`)} keyboardType="number-pad" value={String(profile[key])} onChangeText={(value) => changeMacro(key, value)} style={[styles.calorieLimitInput, styles.macroLimitInput]} maxLength={3} />
+            </View>
+          ))}
+          </View>
+          <Text style={styles.macroHint}>{t("settings.macroRatioHint")}</Text>
+          {profileMessage ? <Text accessibilityRole={profileMessage === "settings.profileSaved" ? "text" : "alert"} style={profileMessage === "settings.profileSaved" ? styles.success : styles.error}>{t(profileMessage)}</Text> : profileBusy ? <Text style={styles.saveStatus}>{t("settings.savingCalorieLimit")}</Text> : null}
         </View>
       ) : null}
 
@@ -234,6 +264,11 @@ function createStyles(colors: { background: string; border: string; danger: stri
     accountEmail: { color: colors.muted, fontSize: 13 },
     preferenceSection: { marginTop: 28 },
     calorieLimitSection: { marginTop: 28 },
+    goalHeading: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: 18 },
+    macroLimitInputs: { flexDirection: "row", gap: 10, marginTop: 12 },
+    macroLimitRow: { flex: 1, gap: 5 },
+    macroLimitInput: { height: 52, paddingHorizontal: 10, width: 72 },
+    macroHint: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 10 },
     calorieLimitInput: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 12, borderWidth: 1, color: colors.text, fontSize: 16, minHeight: 52, paddingHorizontal: 14 },
     preferenceLabel: { color: colors.text, fontSize: 14, fontWeight: "600", marginBottom: 10 },
     preferenceOptions: { flexDirection: "row", gap: 10 },

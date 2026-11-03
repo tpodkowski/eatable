@@ -1,5 +1,5 @@
 meta {
-  name: Update profile calorie limit
+  name: Update profile calorie and macro limits
   type: http
   seq: 6
 }
@@ -17,15 +17,21 @@ headers {
 
 body:json {
   {
-    "dailyCalorieLimit": 2200
+    "dailyCalorieLimit": 2200,
+    "dailyProteinLimit": 110,
+    "dailyCarbohydratesLimit": 275,
+    "dailyFatLimit": 73
   }
 }
 
 docs {
-  Update the signed-in user's daily calorie limit. The value must be an integer from 1 to 100000.
+  Update the signed-in user's calorie and macro limits. All values must be integers from 1 to 100000. The app derives macro grams using the default 20/30/50 calorie split when calories change; changing macro grams recalculates calories at 4 kcal/g for protein and carbohydrates and 9 kcal/g for fat.
 
   Example response:
   {
-    "dailyCalorieLimit": 2200
+    "dailyCalorieLimit": 2200,
+    "dailyProteinLimit": 110,
+    "dailyCarbohydratesLimit": 275,
+    "dailyFatLimit": 73
   }
 }

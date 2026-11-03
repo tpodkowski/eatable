@@ -15,10 +15,13 @@ headers {
 }
 
 docs {
-  Fetch the signed-in user's profile. A profile is created with a daily calorie limit of 2000 when first fetched.
+  Fetch the signed-in user's profile. A new profile uses 2000 kcal, 100 g protein, 250 g carbohydrates, and 67 g fat by default.
 
   Example response:
   {
-    "dailyCalorieLimit": 2000
+    "dailyCalorieLimit": 2000,
+    "dailyProteinLimit": 100,
+    "dailyCarbohydratesLimit": 250,
+    "dailyFatLimit": 67
   }
 }

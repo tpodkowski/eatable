@@ -7,15 +7,13 @@ import { SkeletonBlock } from "../../components/SkeletonBlock";
 import { authClient } from "../../lib/auth-client";
 import { localDateKey, shiftDate } from "../../lib/dates";
 import { getInitials } from "../../lib/initials";
-import { fetchDailyMeals } from "../../lib/meals-api";
-import { fetchUserProfile } from "../../lib/profile-api";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { useDailyMeals } from "../meals/useDailyMeals";
 import { getNextMeal } from "../meals/meal-schedule";
 import { mealNameKey } from "../../lib/meal-name";
-import { beginGlobalLoading } from "../../lib/global-loading";
-import type { UserProfile } from "@eatable/shared";
 import { MacroProgress } from "./MacroProgress";
+import { useDashboardProfile } from "./useDashboardProfile";
+import { useTomorrowMeals } from "./useTomorrowMeals";
 
 export function DashboardScreen() {
   const router = useRouter();
@@ -25,19 +23,7 @@ export function DashboardScreen() {
   const { data: session } = authClient.useSession();
   const { dailyMeals, isLoading, error } = useDailyMeals(session?.user.id);
   const [now, setNow] = useState(() => new Date());
-  const [tomorrowMeals, setTomorrowMeals] = useState<typeof dailyMeals>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  useEffect(() => {
-    if (!session?.user.id) {
-      setProfile(null);
-      return;
-    }
-    let active = true;
-    void fetchUserProfile()
-      .then((loadedProfile) => { if (active) setProfile(loadedProfile); })
-      .catch(() => { if (active) setProfile(null); });
-    return () => { active = false; };
-  }, [session?.user.id]);
+  const profile = useDashboardProfile(session?.user.id);
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(timer);
@@ -51,19 +37,7 @@ export function DashboardScreen() {
   const today = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" }).format(new Date());
   const nextMeal = getNextMeal(dailyMeals?.mealTypes ?? [], now);
   const tomorrowDate = shiftDate(localDateKey(now), 1);
-  useEffect(() => {
-    if (!nextMeal?.tomorrow) {
-      setTomorrowMeals(null);
-      return;
-    }
-    let active = true;
-    const finishLoading = beginGlobalLoading();
-    void fetchDailyMeals(tomorrowDate)
-      .then((result) => { if (active) setTomorrowMeals(result); })
-      .catch(() => { if (active) setTomorrowMeals(null); })
-      .finally(finishLoading);
-    return () => { active = false; };
-  }, [nextMeal?.tomorrow, tomorrowDate]);
+  const tomorrowMeals = useTomorrowMeals(tomorrowDate, Boolean(nextMeal?.tomorrow));
   const displayedNextMeal = nextMeal?.tomorrow
     ? { ...nextMeal, meal: tomorrowMeals?.mealTypes.find((meal) => meal.id === nextMeal.meal.id) ?? nextMeal.meal }
     : nextMeal;

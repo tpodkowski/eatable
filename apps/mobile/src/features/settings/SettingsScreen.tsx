@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
@@ -7,9 +7,8 @@ import { AppScreen } from "../../components/AppScreen";
 import { authErrorKey } from "../../lib/auth-errors";
 import { authClient } from "../../lib/auth-client";
 import { readLanguagePreference, saveLanguagePreference } from "../../lib/preferences";
-import { fetchUserProfile, updateUserProfile } from "../../lib/profile-api";
-import type { UserProfile } from "@eatable/shared";
-import { isValidUserProfile, updateProfileFromCalories, updateProfileFromMacro } from "./profile-form";
+import { updateProfileFromCalories, updateProfileFromMacro } from "./profile-form";
+import { useProfileSettings } from "./useProfileSettings";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import type { AppLanguage } from "../../i18n/translations";
 
@@ -22,27 +21,7 @@ export function SettingsScreen() {
   const [language, setLanguage] = useState<AppLanguage>(i18n.resolvedLanguage === "en" ? "en" : "pl");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [profile, setProfile] = useState<UserProfile>({ dailyCalorieLimit: 2000, dailyProteinLimit: 100, dailyCarbohydratesLimit: 250, dailyFatLimit: 67 });
-  const [profileBusy, setProfileBusy] = useState(false);
-  const [profileMessage, setProfileMessage] = useState<string | null>(null);
-  const initialLimitLoaded = useRef(false);
-  const savedProfile = useRef<UserProfile>(profile);
-  const latestSave = useRef(0);
-
-  useEffect(() => {
-    if (!session) return;
-    let active = true;
-    void fetchUserProfile()
-      .then((profile) => {
-        if (active) {
-          savedProfile.current = profile;
-          initialLimitLoaded.current = true;
-          setProfile(profile);
-        }
-      })
-      .catch(() => { if (active) setProfileMessage("errors.profileLoadFailed"); });
-    return () => { active = false; };
-  }, [session]);
+  const { profile, setProfile, isSaving: profileBusy, message: profileMessage } = useProfileSettings(Boolean(session));
 
   useEffect(() => {
     let active = true;
@@ -80,44 +59,6 @@ export function SettingsScreen() {
       setBusy(false);
     }
   }
-
-  useEffect(() => {
-    if (!session || !initialLimitLoaded.current) return;
-    if (JSON.stringify(profile) === JSON.stringify(savedProfile.current)) {
-      latestSave.current += 1;
-      setProfileBusy(false);
-      setProfileMessage(null);
-      return;
-    }
-    if (!isValidUserProfile(profile)) {
-      setProfileBusy(false);
-      setProfileMessage("errors.invalidUserProfile");
-      return;
-    }
-    const saveId = ++latestSave.current;
-    setProfileBusy(true);
-    setProfileMessage(null);
-    const timeout = setTimeout(() => {
-      void updateUserProfile(profile)
-        .then(() => {
-          if (latestSave.current === saveId) {
-            savedProfile.current = profile;
-            setProfileMessage("settings.profileSaved");
-          }
-        })
-        .catch((error) => {
-          if (latestSave.current === saveId) {
-            setProfileMessage(error instanceof Error && error.message === "invalidUserProfile"
-              ? "errors.invalidUserProfile"
-              : "errors.profileSaveFailed");
-          }
-        })
-        .finally(() => {
-          if (latestSave.current === saveId) setProfileBusy(false);
-        });
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [profile, session]);
 
   function changeCalories(raw: string) {
     setProfile((current) => updateProfileFromCalories(current, raw));

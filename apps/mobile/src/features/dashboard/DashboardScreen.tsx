@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
+import { BrandLogo } from "../../components/BrandLogo";
 import { SkeletonBlock } from "../../components/SkeletonBlock";
 import { authClient } from "../../lib/auth-client";
 import { localDateKey, shiftDate } from "../../lib/dates";
@@ -53,9 +54,7 @@ export function DashboardScreen() {
   return (
     <AppScreen>
       <View style={styles.header}>
-        <Pressable accessibilityLabel={t("app.goToDashboard")} accessibilityRole="button" onPress={() => router.replace("/")}>
-          <Text style={styles.eyebrow}>EATABLE</Text>
-        </Pressable>
+        <BrandLogo accessibilityLabel={t("app.goToDashboard")} onPress={() => router.replace("/")} />
         <Pressable accessibilityLabel={t("app.openSettings")} accessibilityRole="button" onPress={() => router.push("/settings")} style={styles.avatar}>
           <Text style={styles.avatarText}>{getInitials(session?.user.name || session?.user.email || "")}</Text>
         </Pressable>
@@ -116,7 +115,6 @@ export function DashboardScreen() {
 function createStyles(colors: { blue: string; muted: string; orange: string; primary: string; surface: string; surfaceAlt: string; text: string; violet: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-    eyebrow: { color: colors.blue, fontSize: 12, fontWeight: "700", letterSpacing: 2.5 },
     date: { color: colors.muted, fontSize: 14, marginTop: 24, textTransform: "capitalize" },
     avatar: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderRadius: 22, height: 44, justifyContent: "center", width: 44 },
     avatarText: { color: colors.violet, fontSize: 14, fontWeight: "700" },

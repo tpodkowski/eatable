@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { ActionButton } from "../../components/ActionButton";
 import { AppScreen } from "../../components/AppScreen";
+import { BrandLogo } from "../../components/BrandLogo";
 import { authErrorKey } from "../../lib/auth-errors";
 import { authClient } from "../../lib/auth-client";
 import { useAppTheme } from "../../providers/AppThemeProvider";
@@ -63,7 +64,7 @@ export function AuthScreen({ mode }: { mode: AuthMode }) {
   return (
     <AppScreen>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>EATABLE</Text>
+        <BrandLogo />
       </View>
       <Text style={styles.title}>{t(mode === "sign-in" ? "auth.signInTitle" : "auth.signUpTitle")}</Text>
       <Text style={styles.description}>
@@ -151,7 +152,6 @@ export function AuthScreen({ mode }: { mode: AuthMode }) {
 function createStyles(colors: { blue: string; border: string; danger: string; muted: string; placeholder: string; primary: string; surface: string; text: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-    eyebrow: { color: colors.blue, fontSize: 12, fontWeight: "700", letterSpacing: 2.5 },
     title: { color: colors.text, fontSize: 48, fontWeight: "700", letterSpacing: -2, lineHeight: 52, marginTop: 34 },
     description: { color: colors.muted, fontSize: 16, lineHeight: 24, marginTop: 14 },
     form: { gap: 12, marginTop: 30 },

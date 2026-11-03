@@ -1,6 +1,8 @@
 export type ThemeMode = "system" | "light" | "dark";
 export type ColorScheme = "light" | "dark" | null | undefined;
 
+export const rainbowColors = ["#F44336", "#FF9800", "#FFEB3B", "#4CAF50", "#2196F3", "#9C27B0"] as const;
+
 export const themes = {
   light: {
     background: "#FFF9ED",

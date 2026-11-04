@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
 import { Animated, Easing, View } from "react-native";
 
-export function SkeletonBlock({ width, height, color, radius = 8 }: { width: number | `${number}%`; height: number; color: string; radius?: number }) {
+type SkeletonBlockProps = { width: number | `${number}%`; height: number; color: string; radius?: number };
+
+export function SkeletonBlock({ width, height, color, radius = 8 }: SkeletonBlockProps) {
   const opacity = useRef(new Animated.Value(0.45)).current;
   useEffect(() => {
     const pulse = Animated.loop(Animated.sequence([

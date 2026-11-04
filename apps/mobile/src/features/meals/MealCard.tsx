@@ -5,7 +5,14 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { mealNameKey } from "../../lib/mealName";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 
-export function MealCard({ mealType, onPress }: { mealType: DailyMealType; onPress: () => void }) {
+type MealCardProps = { mealType: DailyMealType; onPress: () => void };
+type NutritionSummaryProps = {
+  total: (key: "calories" | "protein" | "carbohydrates" | "fat") => number;
+  t: (key: string) => string;
+  styles: ReturnType<typeof createStyles>;
+};
+
+export function MealCard({ mealType, onPress }: MealCardProps) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -25,7 +32,7 @@ export function MealCard({ mealType, onPress }: { mealType: DailyMealType; onPre
   );
 }
 
-function NutritionSummary({ total, t, styles }: { total: (key: "calories" | "protein" | "carbohydrates" | "fat") => number; t: (key: string) => string; styles: ReturnType<typeof createStyles> }) {
+function NutritionSummary({ total, t, styles }: NutritionSummaryProps) {
   return (
     <View style={styles.nutrition}>
       <Text style={styles.mealCalories}>{total("calories")} kcal</Text>

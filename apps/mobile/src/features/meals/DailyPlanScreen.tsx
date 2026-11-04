@@ -116,7 +116,15 @@ export function DailyPlanScreen() {
   );
 }
 
-function DailyNutritionSummary({ mealTypes, profile, styles, t, colors }: { mealTypes: NonNullable<ReturnType<typeof useDailyMeals>["dailyMeals"]>["mealTypes"]; profile: UserProfile | null; styles: ReturnType<typeof createStyles>; t: (key: string) => string; colors: { blue: string; danger: string; orange: string; pink: string; success: string } }) {
+type DailyNutritionSummaryProps = {
+  mealTypes: NonNullable<ReturnType<typeof useDailyMeals>["dailyMeals"]>["mealTypes"];
+  profile: UserProfile | null;
+  styles: ReturnType<typeof createStyles>;
+  t: (key: string) => string;
+  colors: { blue: string; danger: string; orange: string; pink: string; success: string };
+};
+
+function DailyNutritionSummary({ mealTypes, profile, styles, t, colors }: DailyNutritionSummaryProps) {
   const entries = mealTypes.flatMap((mealType) => mealType.entries);
   const total = (key: "calories" | "protein" | "carbohydrates" | "fat") => entries.reduce((sum, entry) => sum + (entry[key] ?? 0), 0);
   return (

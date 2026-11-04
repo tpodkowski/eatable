@@ -19,8 +19,9 @@ import { useAppTheme } from "../../providers/AppThemeProvider";
 const googleSignInEnabled = process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED === "true";
 
 type AuthMode = "sign-in" | "sign-up";
+type AuthScreenProps = { mode: AuthMode };
 
-export function AuthScreen({ mode }: { mode: AuthMode }) {
+export function AuthScreen({ mode }: AuthScreenProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors } = useAppTheme();

@@ -141,19 +141,21 @@ export function SettingsScreen() {
   );
 }
 
+type PreferenceOptionsProps = {
+  label: string;
+  options: Array<{ value: string; label: string; icon?: string }>;
+  selected: string;
+  onSelect: (value: string) => void;
+  styles: ReturnType<typeof createStyles>;
+};
+
 function PreferenceOptions({
   label,
   options,
   selected,
   onSelect,
   styles,
-}: {
-  label: string;
-  options: Array<{ value: string; label: string; icon?: string }>;
-  selected: string;
-  onSelect: (value: string) => void;
-  styles: ReturnType<typeof createStyles>;
-}) {
+}: PreferenceOptionsProps) {
   return (
     <View style={styles.preferenceSection}>
       <Text style={styles.preferenceLabel}>{label}</Text>

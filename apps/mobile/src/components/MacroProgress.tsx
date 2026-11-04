@@ -14,10 +14,24 @@ export type MacroProgressItem = {
 };
 
 type MacroProgressSize = "regular" | "compact";
+type MacroProgressProps = { items: MacroProgressItem[]; size?: MacroProgressSize };
+
+type MacroProgressItemViewProps = {
+  accessibilityLabel: string;
+  circumference: number;
+  delay: number;
+  diameter: number;
+  item: MacroProgressItem;
+  progress: number;
+  radius: number;
+  ringWidth: number;
+  styles: ReturnType<typeof createStyles>;
+  trackColor: string;
+};
 
 const DIAMETERS: Record<MacroProgressSize, number> = { regular: 76, compact: 58 };
 
-export function MacroProgress({ items, size = "regular" }: { items: MacroProgressItem[]; size?: MacroProgressSize }) {
+export function MacroProgress({ items, size = "regular" }: MacroProgressProps) {
   const { colors } = useAppTheme();
   const diameter = DIAMETERS[size];
   const styles = useMemo(() => createStyles(colors, diameter), [colors, diameter]);
@@ -61,18 +75,7 @@ function MacroProgressItemView({
   ringWidth,
   styles,
   trackColor,
-}: {
-  accessibilityLabel: string;
-  circumference: number;
-  delay: number;
-  diameter: number;
-  item: MacroProgressItem;
-  progress: number;
-  radius: number;
-  ringWidth: number;
-  styles: ReturnType<typeof createStyles>;
-  trackColor: string;
-}) {
+}: MacroProgressItemViewProps) {
   const [animatedProgress, setAnimatedProgress] = useState(0);
 
   useEffect(() => {

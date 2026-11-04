@@ -15,6 +15,20 @@ These instructions apply to the entire Eatable monorepo (`apps/api`, `apps/mobil
 - Use dot-separated role suffixes before the extension for related files, such as `MyComponent.test.ts` or `MyComponent.story.ts`. Keep the base name's PascalCase or camelCase and use the extension required by the file type and package tooling.
 - Keep tool-required names for configuration and generated files when the tool depends on those exact filenames.
 
+## TypeScript Conventions
+
+- Prefer an `as const` object and a type derived from its values over TypeScript `enum`s. Use a PascalCase name for both the object and its derived union type, for example:
+  ```ts
+  const Direction = {
+    Up: "UP",
+    Down: "DOWN",
+    Left: "LEFT",
+    Right: "RIGHT",
+  } as const;
+
+  type Direction = (typeof Direction)[keyof typeof Direction];
+  ```
+
 ## Git Commit Attribution
 
 - Attribute commits to the real human user configured for the repository; never use an AI agent's name or identity as the commit author or committer.
@@ -46,3 +60,4 @@ These instructions apply to the entire Eatable monorepo (`apps/api`, `apps/mobil
 - Keep shared presentation concerns such as theme tokens and translations in their existing app-wide modules. Avoid duplicating these values inside feature components.
 - Prefer small modules with one clear responsibility. Split a component or module when it starts owning unrelated UI, state, and data access responsibilities.
 - Reuse API contract types from `packages/shared` instead of redefining them in the mobile app.
+- Declare component props in a separate named type or interface; do not write props types inline in a function parameter. Name the props type after the component (for example, `MacroProgressItemViewProps`), never with a generic name such as `Props`.

@@ -2,19 +2,17 @@ FROM node:22-bookworm-slim
 
 WORKDIR /app
 
-RUN npm install --global pnpm@10.20.0
-
-COPY package.json pnpm-workspace.yaml .npmrc ./
+COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY packages/shared/package.json packages/shared/package.json
 COPY apps/mobile/package.json apps/mobile/package.json
 
-RUN pnpm install --filter @eatable/api... --no-frozen-lockfile
+RUN npm ci --workspace=@eatable/api --workspace=@eatable/shared
 
 COPY . .
 
 ENV NODE_ENV=production
-RUN pnpm --filter @eatable/api build
+RUN npm run build --workspace=@eatable/api
 
 EXPOSE 3000
-CMD ["sh", "-c", "pnpm --filter @eatable/api db:migrate && node apps/api/dist/index.js"]
+CMD ["sh", "-c", "npm run db:migrate --workspace=@eatable/api && node apps/api/dist/index.js"]

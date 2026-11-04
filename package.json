@@ -1,14 +1,17 @@
 {
   "name": "eatable",
   "private": true,
-  "packageManager": "pnpm@10.20.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
     "dev": "turbo dev",
-    "dev:mobile": "pnpm --filter @eatable/mobile start",
-    "dev:api": "pnpm --filter @eatable/api dev",
+    "dev:mobile": "npm run start --workspace=@eatable/mobile",
+    "dev:api": "npm run dev --workspace=@eatable/api",
     "build": "turbo build",
     "typecheck": "turbo typecheck"
   },

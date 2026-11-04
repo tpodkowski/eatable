@@ -51,7 +51,7 @@ services:
       - /app/node_modules
       - /app/apps/mobile/node_modules
       - /app/packages/shared/node_modules
-    command: ["pnpm", "--filter", "@eatable/mobile", "exec", "expo", "start", "--web", "--port", "8081"]
+    command: ["npm", "run", "web", "--workspace=@eatable/mobile", "--", "--port", "8081"]
     depends_on:
       - api
 

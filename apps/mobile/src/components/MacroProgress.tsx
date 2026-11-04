@@ -1,5 +1,6 @@
-import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useRef } from "react";
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import Svg, { Circle } from "react-native-svg";
 import { useTranslation } from "react-i18next";
 import { useAppTheme } from "../providers/AppThemeProvider";
 import { getProgressRatio } from "../lib/macroProgress";
@@ -15,6 +16,7 @@ export type MacroProgressItem = {
 type MacroProgressSize = "regular" | "compact";
 
 const DIAMETERS: Record<MacroProgressSize, number> = { regular: 76, compact: 58 };
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export function MacroProgress({ items, size = "regular" }: { items: MacroProgressItem[]; size?: MacroProgressSize }) {
   const { colors } = useAppTheme();
@@ -23,44 +25,99 @@ export function MacroProgress({ items, size = "regular" }: { items: MacroProgres
   const { t } = useTranslation();
   const ringWidth = Math.max(3, Math.round(diameter / 15));
   const radius = diameter / 2 - ringWidth / 2 - 2;
-  const segmentCount = Math.ceil((2 * Math.PI * radius) / 1.7);
-  const segmentWidth = (2 * Math.PI * radius) / segmentCount + 0.3;
+  const circumference = 2 * Math.PI * radius;
 
   return (
     <View style={[styles.row, { marginTop: size === "compact" ? 12 : 20 }]}>
-      {items.map((item) => {
-        const activeSegments = Math.round(getProgressRatio(item.consumed, item.target) * segmentCount);
+      {items.map((item, index) => {
+        const progress = getProgressRatio(item.consumed, item.target);
         return (
-          <View key={item.key} style={styles.item} accessibilityRole="progressbar" accessibilityLabel={t("dashboard.macroProgress", { name: item.label, consumed: item.consumed, target: item.target })} accessibilityValue={{ min: 0, max: item.target, now: Math.min(item.consumed, item.target) }}>
-            <View style={styles.ring}>
-              {Array.from({ length: segmentCount }, (_, index) => {
-                const angle = (index / segmentCount) * Math.PI * 2 - Math.PI / 2;
-                return (
-                  <View
-                    key={index}
-                    style={[
-                      styles.segment,
-                      {
-                        backgroundColor: index < activeSegments ? item.color : colors.border,
-                        height: ringWidth,
-                        left: diameter / 2 + Math.cos(angle) * radius - segmentWidth / 2,
-                        top: diameter / 2 + Math.sin(angle) * radius - ringWidth / 2,
-                        transform: [{ rotate: `${(angle * 180) / Math.PI + 90}deg` }],
-                        width: segmentWidth,
-                      },
-                    ]}
-                  />
-                );
-              })}
-              <View style={styles.centerValue}>
-                <Text numberOfLines={1} style={styles.amount}>{item.consumed}</Text>
-                <Text style={styles.target}>/ {item.target} g</Text>
-              </View>
-            </View>
-            <Text numberOfLines={1} style={styles.label}>{item.label}</Text>
-          </View>
+          <MacroProgressItemView
+            key={item.key}
+            accessibilityLabel={t("dashboard.macroProgress", { name: item.label, consumed: item.consumed, target: item.target })}
+            circumference={circumference}
+            delay={index * 110}
+            diameter={diameter}
+            item={item}
+            progress={progress}
+            radius={radius}
+            ringWidth={ringWidth}
+            styles={styles}
+            trackColor={colors.border}
+          />
         );
       })}
+    </View>
+  );
+}
+
+function MacroProgressItemView({
+  accessibilityLabel,
+  circumference,
+  delay,
+  diameter,
+  item,
+  progress,
+  radius,
+  ringWidth,
+  styles,
+  trackColor,
+}: {
+  accessibilityLabel: string;
+  circumference: number;
+  delay: number;
+  diameter: number;
+  item: MacroProgressItem;
+  progress: number;
+  radius: number;
+  ringWidth: number;
+  styles: ReturnType<typeof createStyles>;
+  trackColor: string;
+}) {
+  const animatedProgress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animation = Animated.timing(animatedProgress, {
+      toValue: progress,
+      duration: 850,
+      delay,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    });
+
+    animation.start();
+    return () => animation.stop();
+  }, [animatedProgress, delay, progress]);
+
+  const strokeDashoffset = animatedProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [circumference, 0],
+  });
+
+  return (
+    <View style={styles.item} accessibilityRole="progressbar" accessibilityLabel={accessibilityLabel} accessibilityValue={{ min: 0, max: item.target, now: Math.min(item.consumed, item.target) }}>
+      <View style={styles.ring}>
+        <Svg height={diameter} style={styles.progressSvg} viewBox={`0 0 ${diameter} ${diameter}`} width={diameter}>
+          <Circle cx={diameter / 2} cy={diameter / 2} fill="none" r={radius} stroke={trackColor} strokeWidth={ringWidth} />
+          {progress > 0 && <AnimatedCircle
+            cx={diameter / 2}
+            cy={diameter / 2}
+            fill="none"
+            r={radius}
+            transform={`rotate(-90 ${diameter / 2} ${diameter / 2})`}
+            stroke={item.color}
+            strokeDasharray={`${circumference} ${circumference}`}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            strokeWidth={ringWidth}
+          />}
+        </Svg>
+        <View style={styles.centerValue}>
+          <Text numberOfLines={1} style={styles.amount}>{item.consumed}</Text>
+          <Text style={styles.target}>/ {item.target} g</Text>
+        </View>
+      </View>
+      <Text numberOfLines={1} style={styles.label}>{item.label}</Text>
     </View>
   );
 }
@@ -71,7 +128,7 @@ function createStyles(colors: { border: string; muted: string; text: string }, d
     row: { flexDirection: "row", justifyContent: "space-between" },
     item: { alignItems: "center", flex: 1 },
     ring: { alignItems: "center", height: diameter, justifyContent: "center", width: diameter },
-    segment: { borderRadius: 3, position: "absolute" },
+    progressSvg: { position: "absolute" },
     centerValue: { alignItems: "center", justifyContent: "center", width: diameter - 12 },
     amount: { color: colors.text, fontSize: compact ? 14 : 17, fontWeight: "700", maxWidth: diameter - 12 },
     target: { color: colors.muted, fontSize: compact ? 9 : 10, marginTop: 1 },

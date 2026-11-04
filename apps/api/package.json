@@ -4,16 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm db:migrate && tsx watch src/index.ts",
+    "dev": "npm run db:migrate && tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "pnpm db:migrate && tsx src/index.ts",
+    "start": "npm run db:migrate && tsx src/index.ts",
     "db:migrate": "auth migrate --config src/auth.ts --yes",
     "test": "node --import tsx --test src/meals.test.ts src/meals/service.test.ts src/profile.test.ts src/app.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@better-auth/expo": "1.7.15",
-    "@eatable/shared": "workspace:*",
+    "@eatable/shared": "*",
     "@fastify/cors": "^11.1.0",
     "better-auth": "1.7.15",
     "fastify": "^5.6.2",

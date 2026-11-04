@@ -12,6 +12,8 @@ export const translations = {
       noMealEntries: "Nie dodano jeszcze produktów.",
       openMeals: "Posiłki i plan dnia",
       mealsSubtitle: "Zobacz lub dodaj wpisy",
+      recipes: "Przepisy",
+      recipesComingSoon: "W przygotowaniu",
     },
     app: {
       sessionLoading: "Sprawdzam sesję…",
@@ -148,6 +150,8 @@ export const translations = {
       noMealEntries: "No products added yet.",
       openMeals: "Meals and daily plan",
       mealsSubtitle: "View or add entries",
+      recipes: "Recipes",
+      recipesComingSoon: "Coming soon",
     },
     app: {
       sessionLoading: "Checking your session…",

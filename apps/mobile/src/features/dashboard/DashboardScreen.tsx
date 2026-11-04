@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { AppScreen } from "../../components/AppScreen";
 import { SkeletonBlock } from "../../components/SkeletonBlock";
 import { authClient } from "../../lib/authClient";
@@ -18,7 +19,7 @@ import { useTomorrowMeals } from "./useTomorrowMeals";
 export function DashboardScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { colors } = useAppTheme();
+  const { colors, name: themeName } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: session } = authClient.useSession();
   const { dailyMeals, isLoading, error } = useDailyMeals(session?.user.id);
@@ -43,16 +44,7 @@ export function DashboardScreen() {
     : nextMeal;
 
   return (
-    <AppScreen footer={(
-      <Pressable accessibilityRole="button" onPress={() => router.push("/meals")} style={({ pressed }) => [styles.mealsButton, pressed && styles.pressed]}>
-        <Text style={styles.mealsEmoji}>📅</Text>
-        <View style={styles.buttonTextWrap}>
-          <Text style={styles.buttonTitle}>{t("dashboard.openMeals")}</Text>
-          <Text style={styles.buttonSubtitle}>{t("dashboard.mealsSubtitle")}</Text>
-        </View>
-        <Text style={styles.arrow}>›</Text>
-      </Pressable>
-    )}>
+    <AppScreen>
       <View style={styles.header}>
         <Text style={styles.date}>{today}</Text>
         <Pressable accessibilityLabel={t("app.openSettings")} accessibilityRole="button" onPress={() => router.push("/settings")} style={styles.avatar}>
@@ -123,6 +115,26 @@ export function DashboardScreen() {
         {displayedNextMeal?.tomorrow ? <Text style={styles.summaryHint}>{t("dashboard.tomorrow")}</Text> : null}
       </Pressable>
 
+      <View style={styles.tilesRow}>
+        <Pressable accessibilityRole="button" onPress={() => router.push("/meals")} style={({ pressed }) => [styles.tile, styles.mealsTile, pressed && styles.pressed]}>
+          <LinearGradient
+            colors={themeName === "dark" ? ["#6D28D9", "#1D4ED8"] : [colors.primary, colors.blue]}
+            end={{ x: 0.5, y: 1 }}
+            pointerEvents="none"
+            start={{ x: 0.5, y: 0 }}
+            style={styles.tileGradient}
+          />
+          <Text style={styles.tileEmoji}>📅</Text>
+          <Text style={[styles.tileTitle, styles.mealsTileTitle]}>{t("dashboard.openMeals")}</Text>
+          <Text style={[styles.tileSubtitle, styles.mealsTileSubtitle]}>{t("dashboard.mealsSubtitle")}</Text>
+        </Pressable>
+        <View accessibilityRole="text" style={[styles.tile, styles.comingSoonTile]}>
+          <Text style={styles.tileEmoji}>📖</Text>
+          <Text style={styles.tileTitle}>{t("dashboard.recipes")}</Text>
+          <Text style={styles.tileSubtitle}>{t("dashboard.recipesComingSoon")}</Text>
+        </View>
+      </View>
+
     </AppScreen>
   );
 }
@@ -153,12 +165,21 @@ function createStyles(colors: { border: string; blue: string; danger: string; mu
     nextMealEntry: { color: colors.text, fontSize: 12, lineHeight: 17 },
     summarySkeleton: { gap: 16, marginTop: 18 },
     nextMealSkeleton: { gap: 12, marginTop: 12 },
-    mealsButton: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 18, borderWidth: 1, flexDirection: "row", gap: 14, justifyContent: "space-between", minHeight: 82, paddingHorizontal: 20, width: "100%" },
-    mealsEmoji: { fontSize: 26 },
-    buttonTextWrap: { gap: 4 },
-    buttonTitle: { color: colors.text, fontSize: 16, fontWeight: "700" },
-    buttonSubtitle: { color: colors.muted, fontSize: 13 },
-    arrow: { color: "#000000", fontSize: 32, fontWeight: "300" },
+    recipesCard: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 14, marginTop: 12, minHeight: 82, paddingHorizontal: 18 },
+    recipesEmoji: { fontSize: 25 },
+    recipesTextWrap: { gap: 4 },
+    recipesTitle: { color: colors.text, fontSize: 16, fontWeight: "700" },
+    recipesSubtitle: { color: colors.muted, fontSize: 13 },
+    tilesRow: { flexDirection: "row", gap: 12, marginTop: 12 },
+    tile: { alignItems: "flex-start", backgroundColor: "transparent", borderColor: colors.border, borderRadius: 14, borderWidth: 1, flex: 1, gap: 7, justifyContent: "center", minHeight: 112, overflow: "hidden", padding: 14 },
+    mealsTile: { borderColor: colors.primary },
+    mealsTileTitle: { color: "#FFFFFF" },
+    mealsTileSubtitle: { color: "#F1E7FF" },
+    tileGradient: { ...StyleSheet.absoluteFill, borderRadius: 14 },
+    comingSoonTile: { backgroundColor: colors.surfaceAlt, opacity: 0.58 },
+    tileEmoji: { fontSize: 23 },
+    tileTitle: { color: colors.text, fontSize: 14, fontWeight: "700" },
+    tileSubtitle: { color: colors.muted, fontSize: 12 },
     pressed: { opacity: 0.82 },
   });
 }

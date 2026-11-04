@@ -23,7 +23,7 @@ export function DailyPlanScreen() {
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: session } = authClient.useSession();
-  const { date, setDate, dailyMeals, datesWithEntries, isLoading, error, refresh } = useDailyMeals(session?.user.id, routeDate);
+  const { date, setDate, dailyMeals, datesWithEntries, caloriesByDate, isLoading, error, refresh } = useDailyMeals(session?.user.id, routeDate);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const dayTransition = useRef(new Animated.Value(1)).current;
   const dayOffset = useRef(new Animated.Value(0)).current;
@@ -81,7 +81,7 @@ export function DailyPlanScreen() {
           <Text style={styles.backText}>{t("app.back")}</Text>
         </Pressable>
       </View>
-      <DateStrip anchor={stripAnchor} date={date} datesWithEntries={datesWithEntries} locale={locale} onAnchorChange={setStripAnchor} onDateChange={setDate} />
+      <DateStrip anchor={stripAnchor} date={date} datesWithEntries={datesWithEntries} caloriesByDate={caloriesByDate} dailyCalorieLimit={profile?.dailyCalorieLimit} locale={locale} onAnchorChange={setStripAnchor} onDateChange={setDate} />
 
       <View {...daySwipeResponder.panHandlers}>
       <Animated.View style={{ opacity: dayTransition, transform: [{ translateX: dayOffset }] }}>
@@ -134,7 +134,7 @@ function DailyNutritionSummary({ mealTypes, profile, styles, t, colors }: { meal
   );
 }
 
-function createStyles(colors: { background: string; border: string; blue: string; danger: string; muted: string; orange: string; pink: string; primary: string; primaryText: string; surface: string; surfaceAlt: string; text: string }) {
+function createStyles(colors: { background: string; border: string; blue: string; danger: string; muted: string; orange: string; pink: string; primary: string; primaryText: string; success: string; surface: string; surfaceAlt: string; text: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: -8, minHeight: 36 },
     backButton: { alignItems: "flex-start", justifyContent: "center", minHeight: 26, paddingRight: 8 },

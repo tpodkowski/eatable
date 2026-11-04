@@ -13,12 +13,14 @@ type DateStripProps = {
   anchor: string;
   date: string;
   datesWithEntries: Set<string>;
+  caloriesByDate: Map<string, number>;
+  dailyCalorieLimit?: number;
   locale: string;
   onAnchorChange: (date: string) => void;
   onDateChange: (date: string) => void;
 };
 
-export function DateStrip({ anchor, date, datesWithEntries, locale, onAnchorChange, onDateChange }: DateStripProps) {
+export function DateStrip({ anchor, date, datesWithEntries, caloriesByDate, dailyCalorieLimit, locale, onAnchorChange, onDateChange }: DateStripProps) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -67,13 +69,14 @@ export function DateStrip({ anchor, date, datesWithEntries, locale, onAnchorChan
           const stripDate = new Date(year, month - 1, day, 12);
           const isSelected = dayKey === date;
           const hasEntries = datesWithEntries.has(dayKey);
+          const isOverLimit = dailyCalorieLimit !== undefined && (caloriesByDate.get(dayKey) ?? 0) > dailyCalorieLimit;
           const weekday = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(stripDate).replace(/\.$/, "");
           const accessibilityDate = new Intl.DateTimeFormat(locale, { dateStyle: "full" }).format(stripDate);
           return (
             <Pressable key={dayKey} accessibilityLabel={accessibilityDate} accessibilityRole="button" accessibilityState={{ selected: isSelected }} onPress={() => onDateChange(dayKey)} style={[styles.dateButton, isSelected && styles.selectedDateButton]}>
               <Text style={[styles.weekdayText, isSelected && styles.selectedDateText]}>{weekday}</Text>
               <Text style={[styles.dayNumberText, isSelected && styles.selectedDateText]}>{day}</Text>
-              {hasEntries ? <View style={[styles.entryDot, isSelected && styles.selectedEntryDot]} /> : null}
+              <View style={[styles.entryDot, hasEntries ? (isOverLimit ? styles.overLimitEntryDot : styles.withinLimitEntryDot) : styles.hiddenEntryDot]} />
             </Pressable>
           );
         })}
@@ -95,7 +98,7 @@ export function DateStrip({ anchor, date, datesWithEntries, locale, onAnchorChan
   );
 }
 
-function createStyles(colors: { background: string; blue: string; muted: string; primary: string; primaryText: string; text: string }) {
+function createStyles(colors: { background: string; blue: string; danger: string; muted: string; primary: string; primaryText: string; success: string; text: string }) {
   return StyleSheet.create({
     container: { position: "relative" },
     scroll: { marginHorizontal: -16, marginVertical: 8 },
@@ -107,12 +110,14 @@ function createStyles(colors: { background: string; blue: string; muted: string;
     todayJumpButton: { alignItems: "center", height: "100%", justifyContent: "center", position: "absolute" },
     todayJumpArrow: { color: colors.primary, fontSize: 25, lineHeight: 28 },
     items: { gap: 8, paddingVertical: 4 },
-    dateButton: { alignItems: "center", borderRadius: 16, height: 62, marginRight: 0, position: "relative", width: 48 },
+    dateButton: { alignItems: "center", borderRadius: 16, gap: 4, justifyContent: "center", marginRight: 0, minHeight: 64, paddingVertical: 8, width: 48 },
     selectedDateButton: { backgroundColor: colors.blue },
-    weekdayText: { color: colors.muted, fontSize: 11, fontWeight: "600", position: "absolute", textAlign: "center", textTransform: "uppercase", top: 12, width: "100%" },
-    dayNumberText: { color: colors.text, fontSize: 16, fontWeight: "700", position: "absolute", textAlign: "center", top: 30, width: "100%" },
-    entryDot: { backgroundColor: colors.blue, borderRadius: 3, bottom: 7, height: 6, position: "absolute", width: 6 },
-    selectedEntryDot: { backgroundColor: "#FFFFFF" },
+    weekdayText: { color: colors.muted, fontSize: 11, fontWeight: "600", lineHeight: 14, textAlign: "center", textTransform: "uppercase", width: "100%" },
+    dayNumberText: { color: colors.text, fontSize: 16, fontWeight: "700", lineHeight: 20, textAlign: "center", width: "100%" },
+    entryDot: { borderRadius: 3, height: 6, width: 6 },
+    hiddenEntryDot: { opacity: 0 },
+    withinLimitEntryDot: { backgroundColor: colors.success },
+    overLimitEntryDot: { backgroundColor: colors.danger },
     selectedDateText: { color: colors.primaryText },
   });
 }

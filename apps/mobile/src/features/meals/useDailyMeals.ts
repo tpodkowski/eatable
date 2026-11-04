@@ -10,6 +10,7 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [datesWithEntries, setDatesWithEntries] = useState<Set<string>>(() => new Set());
+  const [caloriesByDate, setCaloriesByDate] = useState<Map<string, number>>(() => new Map());
   const [reloadToken, setReloadToken] = useState(0);
   const refresh = useCallback(() => setReloadToken((current) => current + 1), []);
 
@@ -29,6 +30,7 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
         const result = await fetchDailyMeals(date);
         if (active) {
           setDailyMeals(result);
+          setCaloriesByDate((current) => new Map(current).set(date, result.mealTypes.flatMap((mealType) => mealType.entries).reduce((sum, entry) => sum + (entry.calories ?? 0), 0)));
           setDatesWithEntries((current) => {
             const next = new Set(current);
             if (result.mealTypes.some((mealType) => mealType.entries.length > 0)) next.add(date);
@@ -60,6 +62,7 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
           ? { ...mealType, entries: [...mealType.entries, createdEntry] }
           : mealType),
       }));
+      setCaloriesByDate((current) => new Map(current).set(date, (current.get(date) ?? 0) + (createdEntry.calories ?? 0)));
       setDatesWithEntries((current) => new Set(current).add(date));
     } finally { finishLoading(); }
   }
@@ -74,6 +77,7 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
           ? { ...mealType, entries: mealType.entries.map((currentEntry) => currentEntry.id === entry.id ? updatedEntry : currentEntry) }
           : mealType),
       }));
+      setCaloriesByDate((current) => new Map(current).set(date, Math.max(0, (current.get(date) ?? 0) - (entry.calories ?? 0) + (updatedEntry.calories ?? 0))));
     } finally { finishLoading(); }
   }
 
@@ -87,6 +91,7 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
           ? { ...mealType, entries: mealType.entries.filter((currentEntry) => currentEntry.id !== entry.id) }
           : mealType),
       }));
+      setCaloriesByDate((current) => new Map(current).set(date, Math.max(0, (current.get(date) ?? 0) - (entry.calories ?? 0))));
       setDatesWithEntries((current) => {
         if (!dailyMeals) return current;
         const hasOtherEntries = dailyMeals.mealTypes.some((mealType) =>
@@ -100,5 +105,5 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
     } finally { finishLoading(); }
   }
 
-  return { date, setDate, dailyMeals, datesWithEntries, isLoading, error, refresh, addEntry, editEntry, removeEntry };
+  return { date, setDate, dailyMeals, datesWithEntries, caloriesByDate, isLoading, error, refresh, addEntry, editEntry, removeEntry };
 }

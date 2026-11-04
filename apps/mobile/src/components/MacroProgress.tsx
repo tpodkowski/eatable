@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
-import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import { useTranslation } from "react-i18next";
 import { useAppTheme } from "../providers/AppThemeProvider";
@@ -16,7 +16,6 @@ export type MacroProgressItem = {
 type MacroProgressSize = "regular" | "compact";
 
 const DIAMETERS: Record<MacroProgressSize, number> = { regular: 76, compact: 58 };
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export function MacroProgress({ items, size = "regular" }: { items: MacroProgressItem[]; size?: MacroProgressSize }) {
   const { colors } = useAppTheme();
@@ -74,32 +73,42 @@ function MacroProgressItemView({
   styles: ReturnType<typeof createStyles>;
   trackColor: string;
 }) {
-  const animatedProgress = useRef(new Animated.Value(0)).current;
+  const [animatedProgress, setAnimatedProgress] = useState(0);
 
   useEffect(() => {
-    const animation = Animated.timing(animatedProgress, {
-      toValue: progress,
-      duration: 850,
-      delay,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    });
+    let frame: number | undefined;
+    let delayTimer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
 
-    animation.start();
-    return () => animation.stop();
-  }, [animatedProgress, delay, progress]);
+    setAnimatedProgress(0);
+    delayTimer = setTimeout(() => {
+      const startedAt = performance.now();
+      const tick = (now: number) => {
+        if (cancelled) return;
+        const elapsed = now - startedAt;
+        const linearProgress = Math.min(elapsed / 850, 1);
+        const easedProgress = 1 - Math.pow(1 - linearProgress, 3);
+        setAnimatedProgress(progress * easedProgress);
+        if (linearProgress < 1) frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    }, delay);
 
-  const strokeDashoffset = animatedProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [circumference, 0],
-  });
+    return () => {
+      cancelled = true;
+      if (delayTimer !== undefined) clearTimeout(delayTimer);
+      if (frame !== undefined) cancelAnimationFrame(frame);
+    };
+  }, [delay, progress]);
+
+  const strokeDashoffset = circumference * (1 - animatedProgress);
 
   return (
     <View style={styles.item} accessibilityRole="progressbar" accessibilityLabel={accessibilityLabel} accessibilityValue={{ min: 0, max: item.target, now: Math.min(item.consumed, item.target) }}>
       <View style={styles.ring}>
         <Svg height={diameter} style={styles.progressSvg} viewBox={`0 0 ${diameter} ${diameter}`} width={diameter}>
           <Circle cx={diameter / 2} cy={diameter / 2} fill="none" r={radius} stroke={trackColor} strokeWidth={ringWidth} />
-          {progress > 0 && <AnimatedCircle
+          {progress > 0 && <Circle
             cx={diameter / 2}
             cy={diameter / 2}
             fill="none"

@@ -14,6 +14,7 @@ import { DatePickerModal } from "./DatePickerModal";
 import { useDailyMeals } from "./useDailyMeals";
 import { fetchUserProfile } from "../../lib/profile-api";
 import { MacroProgress } from "../../components/MacroProgress";
+import { getDateStripArrowLayout } from "./date-strip-arrow-layout";
 
 const DATE_STRIP_ITEM_WIDTH = 48;
 const DATE_STRIP_ITEM_INTERVAL = 56;
@@ -86,6 +87,7 @@ export function DailyPlanScreen() {
       changeDay(gesture.dx < 0 ? 1 : -1);
     },
   }), [changeDay]);
+  const todayJumpLayout = getDateStripArrowLayout(todayOffscreenDirection ?? "left", colors.background);
 
 
   return (
@@ -151,7 +153,12 @@ export function DailyPlanScreen() {
         })}
       </ScrollView>
       {todayOffscreenDirection ? (
-        <View style={[styles.todayJumpOverlay, todayOffscreenDirection === "left" ? styles.todayJumpLeft : styles.todayJumpRight]}>
+        <View style={[styles.todayJumpOverlay, { width: todayJumpLayout.overlayWidth }, todayOffscreenDirection === "left" ? styles.todayJumpLeft : styles.todayJumpRight]}>
+          <View pointerEvents="none" style={[styles.todayGradient, todayJumpLayout.gradient]}>
+            {todayJumpLayout.gradient.opacityStops.map((opacity, index) => (
+              <View key={index} style={[styles.todayGradientBand, { opacity }]} />
+            ))}
+          </View>
           <Pressable
             accessibilityLabel={t("planner.goToToday")}
             accessibilityRole="button"
@@ -161,7 +168,7 @@ export function DailyPlanScreen() {
               }
               setDate(today);
             }}
-            style={styles.todayJumpButton}
+            style={[styles.todayJumpButton, todayJumpLayout.button]}
           >
             <Text style={styles.todayJumpArrow}>{todayOffscreenDirection === "left" ? "‹" : "›"}</Text>
           </Pressable>
@@ -239,10 +246,12 @@ function createStyles(colors: { background: string; border: string; blue: string
     monthChevron: { color: colors.primary, fontSize: 18, includeFontPadding: false, lineHeight: 18, textAlignVertical: "center" },
     dateStripScroll: { marginHorizontal: -16, marginVertical: 8 },
     dateStripContainer: { position: "relative" },
-    todayJumpOverlay: { alignItems: "center", backgroundColor: colors.background, height: 78, justifyContent: "center", position: "absolute", top: 0, width: 54, zIndex: 4 },
+    todayJumpOverlay: { height: 78, position: "absolute", top: 0, zIndex: 4 },
     todayJumpLeft: { left: -16 },
     todayJumpRight: { right: -16 },
-    todayJumpButton: { alignItems: "center", height: "100%", justifyContent: "center", width: "100%" },
+    todayGradient: { flexDirection: "row", height: "100%", position: "absolute", top: 0 },
+    todayGradientBand: { backgroundColor: colors.background, flex: 1, height: "100%" },
+    todayJumpButton: { alignItems: "center", height: "100%", justifyContent: "center", position: "absolute" },
     todayJumpArrow: { color: colors.primary, fontSize: 25, lineHeight: 28 },
     dateStrip: { gap: 8, paddingVertical: 4 },
     dateButton: { alignItems: "center", borderRadius: 16, height: 62, marginRight: 0, position: "relative", width: 48 },

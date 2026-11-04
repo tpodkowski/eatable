@@ -21,3 +21,10 @@ When adding or changing an effect, ask:
 5. Could this be derived during render or handled directly by an event instead?
 
 Short effects that each own one timer, animation, preference read, route synchronization, or data request are appropriate. The goal is clear ownership and lifecycle behavior, not minimizing the number of effects.
+
+## Component Boundaries
+
+- Keep screen components focused on composing feature components and coordinating screen-level state and navigation.
+- When a screen contains a substantial, independently understandable UI section with its own rendering logic, interaction behavior, state, or styles, extract it into a named component in its own file within the feature directory. Do not leave a self-contained feature component embedded in a screen just because it is currently used once.
+- Pass the extracted component the smallest clear set of props it needs. Keep component-specific styles and behavior with that component; keep shared UI in the existing shared components directory.
+- Small, purely presentational fragments that have no independent behavior or meaningful reuse may remain inline when extraction would only add indirection.

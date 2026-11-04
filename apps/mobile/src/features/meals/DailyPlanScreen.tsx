@@ -13,6 +13,7 @@ import { useDailyMeals } from "./useDailyMeals";
 import { fetchUserProfile } from "../../lib/profile-api";
 import { MacroProgress } from "../../components/MacroProgress";
 import { DateStrip } from "./DateStrip";
+import { useFocusEffect } from "expo-router";
 
 export function DailyPlanScreen() {
   const router = useRouter();
@@ -22,15 +23,20 @@ export function DailyPlanScreen() {
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: session } = authClient.useSession();
-  const { date, setDate, dailyMeals, datesWithEntries, isLoading, error } = useDailyMeals(session?.user.id, routeDate);
+  const { date, setDate, dailyMeals, datesWithEntries, isLoading, error, refresh } = useDailyMeals(session?.user.id, routeDate);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const dayTransition = useRef(new Animated.Value(1)).current;
   const dayOffset = useRef(new Animated.Value(0)).current;
   const [stripAnchor, setStripAnchor] = useState(date);
+  const hasFocusedOnce = useRef(false);
   const locale = i18n.resolvedLanguage === "pl" ? "pl-PL" : "en-US";
   useEffect(() => {
     if (routeDate) setDate(routeDate);
   }, [routeDate, setDate]);
+  useFocusEffect(useCallback(() => {
+    if (hasFocusedOnce.current) refresh();
+    else hasFocusedOnce.current = true;
+  }, [refresh]));
   useEffect(() => {
     if (!session?.user.id) {
       setProfile(null);

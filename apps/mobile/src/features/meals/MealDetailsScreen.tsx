@@ -22,7 +22,6 @@ export function MealDetailsScreen() {
   const { dailyMeals, isLoading, error, addEntry, editEntry, removeEntry } = useDailyMeals(session?.user.id, date);
   const [editingEntry, setEditingEntry] = useState<MealEntry | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [fabExpanded, setFabExpanded] = useState(false);
   const mealType = dailyMeals?.mealTypes.find((item) => item.id === params.mealTypeId);
   const locale = i18n.resolvedLanguage === "pl" ? "pl-PL" : "en-US";
   const localizedName = mealType ? mealNameKey(mealType.name) : null;
@@ -31,14 +30,11 @@ export function MealDetailsScreen() {
     <>
       <AppScreen footer={mealType ? (
         <View style={styles.fabArea}>
-          {fabExpanded ? (
-            <Pressable accessibilityRole="button" disabled={Boolean(error)} onPress={() => { setFabExpanded(false); setEditingEntry(null); setModalOpen(true); }} style={({ pressed }) => [styles.fabAction, pressed && styles.pressed, Boolean(error) && styles.disabled]}>
-              <Text style={styles.fabActionIcon}>＋</Text>
-              <Text style={styles.fabActionText}>{t("planner.addEntry")}</Text>
-            </Pressable>
-          ) : null}
-          <Pressable accessibilityRole="button" accessibilityLabel={fabExpanded ? t("app.back") : t("planner.addEntry")} accessibilityState={{ expanded: fabExpanded }} disabled={Boolean(error)} onPress={() => setFabExpanded((expanded) => !expanded)} style={({ pressed }) => [styles.fab, pressed && styles.pressed, Boolean(error) && styles.disabled]}>
-            <Text style={styles.fabIcon}>{fabExpanded ? "×" : "+"}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("planner.addEntry")} disabled={Boolean(error)} onPress={() => { setEditingEntry(null); setModalOpen(true); }} style={({ pressed }) => [styles.fab, pressed && styles.pressed, Boolean(error) && styles.disabled]}>
+            <View style={styles.fabPlusIcon}>
+              <View style={styles.fabPlusHorizontal} />
+              <View style={styles.fabPlusVertical} />
+            </View>
           </Pressable>
         </View>
       ) : undefined}>
@@ -86,7 +82,6 @@ export function MealDetailsScreen() {
         onClose={() => setModalOpen(false)}
         onSave={addEntry}
         onUpdate={editEntry}
-        onDelete={removeEntry}
       />
     </>
   );
@@ -111,12 +106,11 @@ function createStyles(colors: { border: string; danger: string; muted: string; p
     deleteText: { color: colors.danger, fontSize: 18, fontWeight: "700" },
     message: { color: colors.muted, fontSize: 14, marginTop: 24 },
     error: { color: colors.danger, fontSize: 14, marginTop: 24 },
-    fabArea: { alignItems: "center", gap: 12, width: "100%" },
-    fabAction: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 28, borderWidth: 1, flexDirection: "row", gap: 12, minHeight: 54, paddingHorizontal: 20, shadowColor: "#000000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.16, shadowRadius: 8, elevation: 5 },
-    fabActionIcon: { color: colors.muted, fontSize: 22, fontWeight: "500" },
-    fabActionText: { color: colors.text, fontSize: 15, fontWeight: "600" },
+    fabArea: { alignItems: "flex-end", width: "100%" },
     fab: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 32, height: 64, justifyContent: "center", shadowColor: "#000000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.22, shadowRadius: 8, width: 64, elevation: 6 },
-    fabIcon: { color: "#FFFFFF", fontSize: 38, fontWeight: "300", includeFontPadding: false, textAlign: "center", textAlignVertical: "center" },
+    fabPlusIcon: { alignItems: "center", height: 24, justifyContent: "center", width: 24 },
+    fabPlusHorizontal: { backgroundColor: "#FFFFFF", height: 4, position: "absolute", width: 28 },
+    fabPlusVertical: { backgroundColor: "#FFFFFF", height: 28, position: "absolute", width: 4 },
     pressed: { opacity: 0.82 },
     disabled: { opacity: 0.5 },
   });

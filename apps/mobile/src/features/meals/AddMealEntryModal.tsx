@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { CreateMealEntryInput, DailyMealType, MealEntry } from "@eatable/shared";
 import { useTranslation } from "react-i18next";
-import { Alert, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
 import { formatDate } from "../../lib/dates";
 import { mealNameKey } from "../../lib/meal-name";
@@ -17,34 +17,25 @@ interface AddMealEntryModalProps {
   onClose: () => void;
   onSave: (mealTypeId: string, entry: Omit<CreateMealEntryInput, "date">) => Promise<void>;
   onUpdate: (mealTypeId: string, entry: MealEntry, input: Omit<CreateMealEntryInput, "date">) => Promise<void>;
-  onDelete: (mealTypeId: string, entry: MealEntry) => Promise<void>;
   editingEntry: { mealTypeId: string; entry: MealEntry } | null;
 }
 
-export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, onSave, onUpdate, onDelete, editingEntry }: AddMealEntryModalProps) {
+export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, onSave, onUpdate, editingEntry }: AddMealEntryModalProps) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [selectedMealTypeId, setSelectedMealTypeId] = useState<string | null>(null);
-  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [formFooter, setFormFooter] = useState<ReactNode>(null);
+  const soleMealTypeId = mealTypes.length === 1 ? mealTypes[0].id : null;
 
   useEffect(() => {
     if (visible) {
-      setSelectedMealTypeId(editingEntry?.mealTypeId ?? null);
-      setSelectedEntryId(editingEntry?.entry.id ?? null);
+      setSelectedMealTypeId(editingEntry?.mealTypeId ?? soleMealTypeId);
       setFormFooter(null);
     }
-  }, [visible, editingEntry]);
+  }, [visible, editingEntry, soleMealTypeId]);
 
-  const selectedMealType = mealTypes.find((mealType) => mealType.id === selectedMealTypeId);
-  const selectedEntry = selectedMealType?.entries.find((entry) => entry.id === selectedEntryId);
-  const deleteEntry = useCallback((entry: MealEntry) => {
-    if (!selectedMealTypeId) return;
-    void onDelete(selectedMealTypeId, entry).catch(() => {
-      Alert.alert(t("errors.entryDeleteFailed"));
-    });
-  }, [onDelete, selectedMealTypeId, t]);
+  const selectedEntry = editingEntry?.mealTypeId === selectedMealTypeId ? editingEntry.entry : undefined;
 
   return (
     <Modal
@@ -62,9 +53,11 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
           <View style={styles.headerAction} />
         </View>
         <Text style={styles.title}>{t(selectedEntry ? "planner.editEntryTitle" : "planner.addEntryTitle")}</Text>
-        <Text style={styles.description}>{t(selectedEntry ? "planner.editEntryDescription" : "planner.chooseMeal")}</Text>
+        {selectedEntry || mealTypes.length > 1 ? (
+          <Text style={styles.description}>{t(selectedEntry ? "planner.editEntryDescription" : "planner.chooseMeal")}</Text>
+        ) : null}
 
-        {!editingEntry ? <View style={styles.mealOptions}>
+        {!editingEntry && mealTypes.length > 1 ? <View style={styles.mealOptions}>
           {mealTypes.map((mealType) => {
             const selected = selectedMealTypeId === mealType.id;
             const localizedName = mealNameKey(mealType.name);
@@ -83,38 +76,6 @@ export function AddMealEntryModal({ visible, date, locale, mealTypes, onClose, o
             );
           })}
         </View> : null}
-
-        {selectedMealType && selectedMealType.entries.length > 0 ? (
-          <View style={styles.entriesSection}>
-            <Text style={styles.entriesLabel}>{t("planner.entriesInMeal")}</Text>
-            {selectedMealType.entries.map((entry) => {
-              const selected = selectedEntryId === entry.id;
-              return (
-                <View key={entry.id} style={[styles.entryOption, selected && styles.mealOptionActive]}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    onPress={() => setSelectedEntryId(entry.id)}
-                    style={styles.entrySelect}
-                  >
-                    <Text numberOfLines={1} style={[styles.mealOptionText, selected && styles.mealOptionTextActive]}>{entry.title}</Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityLabel={`${t("planner.deleteEntry")}: ${entry.title}`}
-                    accessibilityRole="button"
-                    onPress={() => deleteEntry(entry)}
-                    style={styles.entryDeleteButton}
-                  >
-                    <Text style={styles.deleteText}>✕</Text>
-                  </Pressable>
-                </View>
-              );
-            })}
-            <Pressable accessibilityRole="button" onPress={() => setSelectedEntryId(null)} style={styles.addAnother}>
-              <Text style={styles.addAnotherText}>{t("planner.addAnotherEntry")}</Text>
-            </Pressable>
-          </View>
-        ) : null}
 
         {selectedMealTypeId ? (
           <MealEntryForm
@@ -148,14 +109,6 @@ function createStyles(colors: { border: string; danger: string; muted: string; p
     mealOptionActive: { backgroundColor: colors.surfaceAlt, borderColor: colors.primary },
     mealOptionText: { color: colors.muted, fontSize: 13, fontWeight: "600" },
     mealOptionTextActive: { color: colors.primary },
-    entriesSection: { gap: 8, marginTop: 20 },
-    entriesLabel: { color: colors.text, fontSize: 13, fontWeight: "600" },
-    entryOption: { alignItems: "center", backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 12, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", minHeight: 42, paddingHorizontal: 12 },
-    entrySelect: { flex: 1, justifyContent: "center", minHeight: 42, paddingRight: 8 },
-    entryDeleteButton: { alignItems: "center", justifyContent: "center", minHeight: 40, minWidth: 40 },
-    deleteText: { color: colors.danger, fontSize: 17, fontWeight: "700" },
-    addAnother: { alignSelf: "flex-start", paddingVertical: 8 },
-    addAnotherText: { color: colors.primary, fontSize: 14, fontWeight: "600" },
     hint: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: 24 },
   });
 }

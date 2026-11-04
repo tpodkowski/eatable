@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { CreateMealEntryInput, DailyMealsResponse, MealEntry } from "@eatable/shared";
 import { localDateKey } from "../../lib/dates";
 import { createMealEntry, deleteMealEntry, fetchDailyMeals, updateMealEntry } from "../../lib/meals-api";
@@ -10,6 +10,8 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [datesWithEntries, setDatesWithEntries] = useState<Set<string>>(() => new Set());
+  const [reloadToken, setReloadToken] = useState(0);
+  const refresh = useCallback(() => setReloadToken((current) => current + 1), []);
 
   useEffect(() => {
     if (!userId) {
@@ -46,7 +48,7 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
     return () => {
       active = false;
     };
-  }, [date, userId]);
+  }, [date, userId, reloadToken]);
 
   async function addEntry(mealTypeId: string, input: Omit<CreateMealEntryInput, "date">) {
     const finishLoading = beginGlobalLoading();
@@ -98,5 +100,5 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
     } finally { finishLoading(); }
   }
 
-  return { date, setDate, dailyMeals, datesWithEntries, isLoading, error, addEntry, editEntry, removeEntry };
+  return { date, setDate, dailyMeals, datesWithEntries, isLoading, error, refresh, addEntry, editEntry, removeEntry };
 }

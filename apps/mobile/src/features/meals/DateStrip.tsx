@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { ScrollViewInstance } from "react-native";
-import { getDateStrip } from "../../lib/dates";
+import { getDateStrip, localDateKey } from "../../lib/dates";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { getDateStripArrowLayout } from "./date-strip-arrow-layout";
 
@@ -13,13 +13,13 @@ type DateStripProps = {
   anchor: string;
   date: string;
   datesWithEntries: Set<string>;
+  locale: string;
   onAnchorChange: (date: string) => void;
   onDateChange: (date: string) => void;
-  today: string;
 };
 
-export function DateStrip({ anchor, date, datesWithEntries, onAnchorChange, onDateChange, today }: DateStripProps) {
-  const { t, i18n } = useTranslation();
+export function DateStrip({ anchor, date, datesWithEntries, locale, onAnchorChange, onDateChange }: DateStripProps) {
+  const { t } = useTranslation();
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const dateStripRef = useRef<ScrollViewInstance>(null);
@@ -27,11 +27,11 @@ export function DateStrip({ anchor, date, datesWithEntries, onAnchorChange, onDa
   const [todayOffscreenDirection, setTodayOffscreenDirection] = useState<"left" | "right" | null>(null);
   const dateStrip = useMemo(() => getDateStrip(anchor), [anchor]);
   const selectedDayIndex = dateStrip.indexOf(date);
+  const today = localDateKey(new Date());
   const todayIndex = dateStrip.indexOf(today);
   const dateStripItemInterval = dateStripWidth > DATE_STRIP_ITEM_WIDTH
     ? (dateStripWidth - DATE_STRIP_ITEM_WIDTH) / Math.max(1, Math.round((dateStripWidth - DATE_STRIP_ITEM_WIDTH) / DATE_STRIP_ITEM_INTERVAL))
     : DATE_STRIP_ITEM_INTERVAL;
-  const locale = i18n.resolvedLanguage === "pl" ? "pl-PL" : "en-US";
   useEffect(() => {
     if (!dateStrip.includes(date)) onAnchorChange(date);
   }, [date, dateStrip, onAnchorChange]);
@@ -66,14 +66,13 @@ export function DateStrip({ anchor, date, datesWithEntries, onAnchorChange, onDa
           const [year, month, day] = dayKey.split("-").map(Number);
           const stripDate = new Date(year, month - 1, day, 12);
           const isSelected = dayKey === date;
-          const isToday = dayKey === today;
           const hasEntries = datesWithEntries.has(dayKey);
           const weekday = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(stripDate).replace(/\.$/, "");
           const accessibilityDate = new Intl.DateTimeFormat(locale, { dateStyle: "full" }).format(stripDate);
           return (
             <Pressable key={dayKey} accessibilityLabel={accessibilityDate} accessibilityRole="button" accessibilityState={{ selected: isSelected }} onPress={() => onDateChange(dayKey)} style={[styles.dateButton, isSelected && styles.selectedDateButton]}>
-              <Text style={[styles.weekdayText, isToday && styles.todayDateText, isSelected && styles.selectedDateText]}>{weekday}</Text>
-              <Text style={[styles.dayNumberText, isToday && styles.todayDateText, isSelected && styles.selectedDateText]}>{day}</Text>
+              <Text style={[styles.weekdayText, isSelected && styles.selectedDateText]}>{weekday}</Text>
+              <Text style={[styles.dayNumberText, isSelected && styles.selectedDateText]}>{day}</Text>
               {hasEntries ? <View style={[styles.entryDot, isSelected && styles.selectedEntryDot]} /> : null}
             </Pressable>
           );
@@ -96,7 +95,7 @@ export function DateStrip({ anchor, date, datesWithEntries, onAnchorChange, onDa
   );
 }
 
-function createStyles(colors: { background: string; blue: string; muted: string; orange: string; primary: string; primaryText: string; text: string }) {
+function createStyles(colors: { background: string; blue: string; muted: string; primary: string; primaryText: string; text: string }) {
   return StyleSheet.create({
     container: { position: "relative" },
     scroll: { marginHorizontal: -16, marginVertical: 8 },
@@ -115,6 +114,5 @@ function createStyles(colors: { background: string; blue: string; muted: string;
     entryDot: { backgroundColor: colors.blue, borderRadius: 3, bottom: 7, height: 6, position: "absolute", width: 6 },
     selectedEntryDot: { backgroundColor: "#FFFFFF" },
     selectedDateText: { color: colors.primaryText },
-    todayDateText: { color: colors.orange },
   });
 }

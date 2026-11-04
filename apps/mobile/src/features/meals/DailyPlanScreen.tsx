@@ -6,10 +6,9 @@ import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react
 import { AppScreen } from "../../components/AppScreen";
 import { SkeletonBlock } from "../../components/SkeletonBlock";
 import { authClient } from "../../lib/auth-client";
-import { isValidDateKey, localDateKey, shiftDate } from "../../lib/dates";
+import { isValidDateKey, shiftDate } from "../../lib/dates";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { MealCard } from "./MealCard";
-import { DatePickerModal } from "./DatePickerModal";
 import { useDailyMeals } from "./useDailyMeals";
 import { fetchUserProfile } from "../../lib/profile-api";
 import { MacroProgress } from "../../components/MacroProgress";
@@ -25,15 +24,10 @@ export function DailyPlanScreen() {
   const { data: session } = authClient.useSession();
   const { date, setDate, dailyMeals, datesWithEntries, isLoading, error } = useDailyMeals(session?.user.id, routeDate);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const dayTransition = useRef(new Animated.Value(1)).current;
   const dayOffset = useRef(new Animated.Value(0)).current;
   const [stripAnchor, setStripAnchor] = useState(date);
   const locale = i18n.resolvedLanguage === "pl" ? "pl-PL" : "en-US";
-  const today = localDateKey(new Date());
-  const [selectedYear, selectedMonth, selectedDay] = date.split("-").map(Number);
-  const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay, 12);
-  const monthLabel = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(selectedDate);
   useEffect(() => {
     if (routeDate) setDate(routeDate);
   }, [routeDate, setDate]);
@@ -80,12 +74,8 @@ export function DailyPlanScreen() {
         >
           <Text style={styles.backText}>{t("app.back")}</Text>
         </Pressable>
-        <Pressable accessibilityLabel={t("planner.chooseDate")} accessibilityRole="button" onPress={() => setDatePickerOpen(true)} style={styles.monthPicker}>
-          <Text style={styles.monthLabel}>{monthLabel}</Text>
-          <Text style={styles.monthChevron}>⌄</Text>
-        </Pressable>
       </View>
-      <DateStrip anchor={stripAnchor} date={date} datesWithEntries={datesWithEntries} onAnchorChange={setStripAnchor} onDateChange={setDate} today={today} />
+      <DateStrip anchor={stripAnchor} date={date} datesWithEntries={datesWithEntries} locale={locale} onAnchorChange={setStripAnchor} onDateChange={setDate} />
 
       <View {...daySwipeResponder.panHandlers}>
       <Animated.View style={{ opacity: dayTransition, transform: [{ translateX: dayOffset }] }}>
@@ -116,16 +106,6 @@ export function DailyPlanScreen() {
       </Animated.View>
       </View>
     </AppScreen>
-    <DatePickerModal
-      visible={datePickerOpen}
-      date={date}
-      locale={locale}
-      onClose={() => setDatePickerOpen(false)}
-      onSelect={(selectedDate) => {
-        setDate(selectedDate);
-        setDatePickerOpen(false);
-      }}
-    />
     </>
   );
 }
@@ -152,9 +132,6 @@ function createStyles(colors: { background: string; border: string; blue: string
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginTop: -8, minHeight: 36 },
     backButton: { alignItems: "flex-start", justifyContent: "center", minHeight: 26, paddingRight: 8 },
     backText: { color: colors.primary, fontSize: 14, fontWeight: "600" },
-    monthPicker: { alignItems: "center", flexDirection: "row", gap: 5, minHeight: 36, paddingHorizontal: 4 },
-    monthLabel: { color: colors.muted, fontSize: 13, fontWeight: "600", textTransform: "capitalize" },
-    monthChevron: { color: colors.primary, fontSize: 18, includeFontPadding: false, lineHeight: 18, textAlignVertical: "center" },
     skeletonList: { gap: 10, marginTop: 18 },
     skeletonMeal: { borderBottomColor: colors.surfaceAlt, borderBottomWidth: 1, gap: 10, paddingHorizontal: 4, paddingVertical: 14 },
     muted: { color: colors.muted, fontSize: 14 },

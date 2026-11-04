@@ -152,9 +152,6 @@ export function DailyPlanScreen() {
       </ScrollView>
       {todayOffscreenDirection ? (
         <View style={[styles.todayJumpOverlay, todayOffscreenDirection === "left" ? styles.todayJumpLeft : styles.todayJumpRight]}>
-          <View pointerEvents="none" style={[styles.todayFadeBand, styles.todayFadeBandWide, todayOffscreenDirection === "right" && styles.todayFadeBandRight]} />
-          <View pointerEvents="none" style={[styles.todayFadeBand, styles.todayFadeBandMedium, todayOffscreenDirection === "right" && styles.todayFadeBandRight]} />
-          <View pointerEvents="none" style={[styles.todayFadeBand, styles.todayFadeBandNarrow, todayOffscreenDirection === "right" && styles.todayFadeBandRight]} />
           <Pressable
             accessibilityLabel={t("planner.goToToday")}
             accessibilityRole="button"
@@ -242,16 +239,11 @@ function createStyles(colors: { background: string; border: string; blue: string
     monthChevron: { color: colors.primary, fontSize: 18, includeFontPadding: false, lineHeight: 18, textAlignVertical: "center" },
     dateStripScroll: { marginHorizontal: -16, marginVertical: 8 },
     dateStripContainer: { position: "relative" },
-    todayJumpOverlay: { height: 70, position: "absolute", top: 4, width: 54, zIndex: 4 },
+    todayJumpOverlay: { alignItems: "center", backgroundColor: colors.background, height: 78, justifyContent: "center", position: "absolute", top: 0, width: 54, zIndex: 4 },
     todayJumpLeft: { left: -16 },
     todayJumpRight: { right: -16 },
-    todayFadeBand: { backgroundColor: colors.background, bottom: 0, left: 0, position: "absolute", top: 0 },
-    todayFadeBandRight: { left: undefined, right: 0 },
-    todayFadeBandWide: { opacity: 0.25, width: 54 },
-    todayFadeBandMedium: { opacity: 0.35, width: 38 },
-    todayFadeBandNarrow: { opacity: 0.4, width: 22 },
-    todayJumpButton: { alignItems: "center", height: 70, justifyContent: "center", width: 54 },
-    todayJumpArrow: { color: colors.primary, fontSize: 25, lineHeight: 28, marginTop: -3 },
+    todayJumpButton: { alignItems: "center", height: "100%", justifyContent: "center", width: "100%" },
+    todayJumpArrow: { color: colors.primary, fontSize: 25, lineHeight: 28 },
     dateStrip: { gap: 8, paddingVertical: 4 },
     dateButton: { alignItems: "center", borderRadius: 16, height: 62, marginRight: 0, position: "relative", width: 48 },
     selectedDateButton: { backgroundColor: colors.blue },

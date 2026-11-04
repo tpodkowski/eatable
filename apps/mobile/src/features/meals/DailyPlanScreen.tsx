@@ -116,15 +116,16 @@ export function DailyPlanScreen() {
   );
 }
 
-function DailyNutritionSummary({ mealTypes, profile, styles, t, colors }: { mealTypes: NonNullable<ReturnType<typeof useDailyMeals>["dailyMeals"]>["mealTypes"]; profile: UserProfile | null; styles: ReturnType<typeof createStyles>; t: (key: string) => string; colors: { blue: string; orange: string; pink: string } }) {
+function DailyNutritionSummary({ mealTypes, profile, styles, t, colors }: { mealTypes: NonNullable<ReturnType<typeof useDailyMeals>["dailyMeals"]>["mealTypes"]; profile: UserProfile | null; styles: ReturnType<typeof createStyles>; t: (key: string) => string; colors: { blue: string; danger: string; orange: string; pink: string; success: string } }) {
   const entries = mealTypes.flatMap((mealType) => mealType.entries);
   const total = (key: "calories" | "protein" | "carbohydrates" | "fat") => entries.reduce((sum, entry) => sum + (entry[key] ?? 0), 0);
   return (
     <View style={styles.summary}>
       <Text style={styles.summaryTitle}>{t("planner.dayTotal")}</Text>
-      <Text style={styles.summaryCalories}>{total("calories")} kcal</Text>
-      <Text style={styles.summaryMacros}>{t("planner.proteinShort")} {total("protein")} g  ·  {t("planner.carbohydratesShort")} {total("carbohydrates")} g  ·  {t("planner.fatShort")} {total("fat")} g</Text>
-      {profile ? <MacroProgress diameter={58} items={[
+      <Text style={[styles.summaryCalories, profile && total("calories") > profile.dailyCalorieLimit ? styles.caloriesOverLimit : profile && total("calories") < profile.dailyCalorieLimit ? styles.caloriesUnderLimit : null]}>
+        {total("calories")}{profile ? <Text style={styles.calorieLimit}> / {profile.dailyCalorieLimit} kcal</Text> : <Text style={styles.calorieLimit}> kcal</Text>}
+      </Text>
+      {profile ? <MacroProgress size="compact" items={[
         { key: "protein", label: t("planner.proteinShort"), consumed: total("protein"), target: profile.dailyProteinLimit, color: colors.blue },
         { key: "fat", label: t("planner.fatShort"), consumed: total("fat"), target: profile.dailyFatLimit, color: colors.pink },
         { key: "carbohydrates", label: t("planner.carbohydratesShort"), consumed: total("carbohydrates"), target: profile.dailyCarbohydratesLimit, color: colors.orange },
@@ -146,6 +147,8 @@ function createStyles(colors: { background: string; border: string; blue: string
     summary: { backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 16, borderWidth: 1, marginTop: 22, padding: 16 },
     summaryTitle: { color: colors.muted, fontSize: 11, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase" },
     summaryCalories: { color: colors.text, fontSize: 20, fontWeight: "600", marginTop: 4 },
-    summaryMacros: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 5 },
+    calorieLimit: { color: colors.muted, fontSize: 16, fontWeight: "600" },
+    caloriesUnderLimit: { color: colors.success },
+    caloriesOverLimit: { color: colors.danger },
   });
 }

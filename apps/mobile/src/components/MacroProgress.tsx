@@ -12,8 +12,13 @@ export type MacroProgressItem = {
   color: string;
 };
 
-export function MacroProgress({ items, diameter = 76 }: { items: MacroProgressItem[]; diameter?: number }) {
+type MacroProgressSize = "regular" | "compact";
+
+const DIAMETERS: Record<MacroProgressSize, number> = { regular: 76, compact: 58 };
+
+export function MacroProgress({ items, size = "regular" }: { items: MacroProgressItem[]; size?: MacroProgressSize }) {
   const { colors } = useAppTheme();
+  const diameter = DIAMETERS[size];
   const styles = useMemo(() => createStyles(colors, diameter), [colors, diameter]);
   const { t } = useTranslation();
   const ringWidth = Math.max(3, Math.round(diameter / 15));
@@ -22,7 +27,7 @@ export function MacroProgress({ items, diameter = 76 }: { items: MacroProgressIt
   const segmentWidth = (2 * Math.PI * radius) / segmentCount + 0.3;
 
   return (
-    <View style={[styles.row, { marginTop: diameter < 70 ? 12 : 20 }]}>
+    <View style={[styles.row, { marginTop: size === "compact" ? 12 : 20 }]}>
       {items.map((item) => {
         const activeSegments = Math.round(getProgressRatio(item.consumed, item.target) * segmentCount);
         return (
@@ -61,7 +66,7 @@ export function MacroProgress({ items, diameter = 76 }: { items: MacroProgressIt
 }
 
 function createStyles(colors: { border: string; muted: string; text: string }, diameter: number) {
-  const compact = diameter < 70;
+  const compact = diameter === DIAMETERS.compact;
   return StyleSheet.create({
     row: { flexDirection: "row", justifyContent: "space-between" },
     item: { alignItems: "center", flex: 1 },

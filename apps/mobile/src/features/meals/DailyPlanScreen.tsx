@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import type { MealEntry, UserProfile } from "@eatable/shared";
+import type { UserProfile } from "@eatable/shared";
 import type { ScrollViewInstance } from "react-native";
 import { Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
@@ -10,13 +10,11 @@ import { authClient } from "../../lib/auth-client";
 import { getDateStrip, isValidDateKey, localDateKey, shiftDate } from "../../lib/dates";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { MealCard } from "./MealCard";
-import { AddMealEntryModal } from "./AddMealEntryModal";
 import { DatePickerModal } from "./DatePickerModal";
 import { useDailyMeals } from "./useDailyMeals";
 import { fetchUserProfile } from "../../lib/profile-api";
 import { MacroProgress } from "../../components/MacroProgress";
 
-const ADD_EMOJIS = ["🍎", "🍉", "🍌", "🥑", "🍔", "🍕", "🧀", "🥗", "🍖", "🍹"];
 const DATE_STRIP_ITEM_WIDTH = 48;
 const DATE_STRIP_ITEM_INTERVAL = 56;
 
@@ -28,17 +26,14 @@ export function DailyPlanScreen() {
   const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: session } = authClient.useSession();
-  const { date, setDate, dailyMeals, isLoading, error, addEntry, editEntry, removeEntry } = useDailyMeals(session?.user.id, routeDate);
+  const { date, setDate, dailyMeals, datesWithEntries, isLoading, error } = useDailyMeals(session?.user.id, routeDate);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<{ mealTypeId: string; entry: MealEntry } | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const [emojiIndex, setEmojiIndex] = useState(0);
-  const emojiOpacity = useRef(new Animated.Value(1)).current;
   const dayTransition = useRef(new Animated.Value(1)).current;
   const dayOffset = useRef(new Animated.Value(0)).current;
   const [stripAnchor, setStripAnchor] = useState(date);
   const [dateStripWidth, setDateStripWidth] = useState(0);
+  const [todayOffscreenDirection, setTodayOffscreenDirection] = useState<"left" | "right" | null>(null);
   const dateStripItemInterval = dateStripWidth > DATE_STRIP_ITEM_WIDTH
     ? (dateStripWidth - DATE_STRIP_ITEM_WIDTH) / Math.max(1, Math.round((dateStripWidth - DATE_STRIP_ITEM_WIDTH) / DATE_STRIP_ITEM_INTERVAL))
     : DATE_STRIP_ITEM_INTERVAL;
@@ -47,6 +42,7 @@ export function DailyPlanScreen() {
   const dateStrip = useMemo(() => getDateStrip(stripAnchor), [stripAnchor]);
   const selectedDayIndex = dateStrip.indexOf(date);
   const today = localDateKey(new Date());
+  const todayIndex = dateStrip.indexOf(today);
   const [selectedYear, selectedMonth, selectedDay] = date.split("-").map(Number);
   const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay, 12);
   const monthLabel = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(selectedDate);
@@ -91,37 +87,10 @@ export function DailyPlanScreen() {
     },
   }), [changeDay]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      Animated.sequence([
-        Animated.timing(emojiOpacity, { toValue: 0, duration: 220, useNativeDriver: true }),
-        Animated.timing(emojiOpacity, { toValue: 1, duration: 320, useNativeDriver: true }),
-      ]).start();
-      setEmojiIndex((current) => (current + 1) % ADD_EMOJIS.length);
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, [emojiOpacity]);
 
   return (
     <>
-    <AppScreen footer={(
-      <Pressable
-        accessibilityLabel={t("planner.addEntry")}
-        accessibilityRole="button"
-        disabled={!dailyMeals || Boolean(error)}
-        onPress={() => {
-          setEditingEntry(null);
-          setAddModalOpen(true);
-        }}
-        style={({ pressed }) => [styles.addButton, (!dailyMeals || Boolean(error)) && styles.disabledButton, pressed && styles.pressed]}
-      >
-        <Text style={styles.addButtonText}>{t("planner.addEntryShort")}</Text>
-        <Animated.Text style={[styles.addButtonEmoji, { opacity: emojiOpacity, transform: [{ scale: emojiOpacity.interpolate({ inputRange: [0, 1], outputRange: [0.65, 1] }) }] }]}>
-          {ADD_EMOJIS[emojiIndex]}
-        </Animated.Text>
-      </Pressable>
-    )}>
+    <AppScreen>
       <View style={styles.header}>
         <Pressable
           accessibilityLabel={t("app.goToDashboard")}
@@ -136,6 +105,7 @@ export function DailyPlanScreen() {
           <Text style={styles.monthChevron}>⌄</Text>
         </Pressable>
       </View>
+      <View style={styles.dateStripContainer}>
       <ScrollView
         style={styles.dateStripScroll}
         key={dateStrip[0]}
@@ -145,6 +115,13 @@ export function DailyPlanScreen() {
         decelerationRate="fast"
         horizontal
         onLayout={(event) => setDateStripWidth(event.nativeEvent.layout.width)}
+        onScroll={(event) => {
+          if (todayIndex < 0 || dateStripWidth === 0) return;
+          const todayStart = todayIndex * dateStripItemInterval + Math.max(0, (dateStripWidth - DATE_STRIP_ITEM_WIDTH) / 2);
+          const scrollX = event.nativeEvent.contentOffset.x;
+          setTodayOffscreenDirection(todayStart + DATE_STRIP_ITEM_WIDTH < scrollX ? "left" : todayStart > scrollX + dateStripWidth ? "right" : null);
+        }}
+        scrollEventThrottle={100}
         snapToAlignment="start"
         snapToInterval={dateStripItemInterval}
         showsHorizontalScrollIndicator={false}
@@ -154,6 +131,7 @@ export function DailyPlanScreen() {
           const stripDate = new Date(year, month - 1, day, 12);
           const isSelected = dayKey === date;
           const isToday = dayKey === today;
+          const hasEntries = datesWithEntries.has(dayKey);
           const weekday = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(stripDate).replace(/\.$/, "");
           const accessibilityDate = new Intl.DateTimeFormat(locale, { dateStyle: "full" }).format(stripDate);
           return (
@@ -163,14 +141,36 @@ export function DailyPlanScreen() {
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
               onPress={() => setDate(dayKey)}
-              style={[styles.dateButton, isSelected && styles.selectedDateButton, isToday && !isSelected && styles.todayDateButton]}
+              style={[styles.dateButton, isSelected && styles.selectedDateButton]}
             >
-              <Text style={[styles.weekdayText, isSelected && styles.selectedDateText, isToday && !isSelected && styles.todayDateText]}>{weekday}</Text>
-              <Text style={[styles.dayNumberText, isSelected && styles.selectedDateText, isToday && !isSelected && styles.todayDateText]}>{day}</Text>
+              <Text style={[styles.weekdayText, isToday && styles.todayDateText, isSelected && styles.selectedDateText]}>{weekday}</Text>
+              <Text style={[styles.dayNumberText, isToday && styles.todayDateText, isSelected && styles.selectedDateText]}>{day}</Text>
+              {hasEntries ? <View style={[styles.entryDot, isSelected && styles.selectedEntryDot]} /> : null}
             </Pressable>
           );
         })}
       </ScrollView>
+      {todayOffscreenDirection ? (
+        <View style={[styles.todayJumpOverlay, todayOffscreenDirection === "left" ? styles.todayJumpLeft : styles.todayJumpRight]}>
+          <View pointerEvents="none" style={[styles.todayFadeBand, styles.todayFadeBandWide, todayOffscreenDirection === "right" && styles.todayFadeBandRight]} />
+          <View pointerEvents="none" style={[styles.todayFadeBand, styles.todayFadeBandMedium, todayOffscreenDirection === "right" && styles.todayFadeBandRight]} />
+          <View pointerEvents="none" style={[styles.todayFadeBand, styles.todayFadeBandNarrow, todayOffscreenDirection === "right" && styles.todayFadeBandRight]} />
+          <Pressable
+            accessibilityLabel={t("planner.goToToday")}
+            accessibilityRole="button"
+            onPress={() => {
+              if (todayIndex >= 0) {
+                dateStripRef.current?.scrollTo({ x: todayIndex * dateStripItemInterval, y: 0, animated: true });
+              }
+              setDate(today);
+            }}
+            style={styles.todayJumpButton}
+          >
+            <Text style={styles.todayJumpArrow}>{todayOffscreenDirection === "left" ? "‹" : "›"}</Text>
+          </Pressable>
+        </View>
+      ) : null}
+      </View>
 
       <View {...daySwipeResponder.panHandlers}>
       <Animated.View style={{ opacity: dayTransition, transform: [{ translateX: dayOffset }] }}>
@@ -186,35 +186,21 @@ export function DailyPlanScreen() {
         <Text accessibilityRole="alert" style={styles.error}>{t(error)}</Text>
       ) : (
         <>
+        {dailyMeals ? <DailyNutritionSummary mealTypes={dailyMeals.mealTypes} profile={profile} styles={styles} t={t} colors={colors} /> : null}
         <View style={styles.mealList}>
           {dailyMeals?.mealTypes.map((mealType) => (
             <MealCard
               key={mealType.id}
               mealType={mealType}
-              onEditEntry={(entry) => {
-                setEditingEntry({ mealTypeId: mealType.id, entry });
-                setAddModalOpen(true);
-              }}
+              onPress={() => router.push({ pathname: "/meal/[mealTypeId]", params: { mealTypeId: mealType.id, date } })}
             />
           ))}
         </View>
-        {dailyMeals ? <DailyNutritionSummary mealTypes={dailyMeals.mealTypes} profile={profile} styles={styles} t={t} colors={colors} /> : null}
         </>
       )}
       </Animated.View>
       </View>
     </AppScreen>
-    <AddMealEntryModal
-      visible={addModalOpen}
-      date={date}
-      locale={locale}
-      mealTypes={dailyMeals?.mealTypes ?? []}
-      editingEntry={editingEntry}
-      onClose={() => setAddModalOpen(false)}
-      onSave={addEntry}
-      onUpdate={editEntry}
-      onDelete={removeEntry}
-    />
     <DatePickerModal
       visible={datePickerOpen}
       date={date}
@@ -255,14 +241,26 @@ function createStyles(colors: { background: string; border: string; blue: string
     monthLabel: { color: colors.muted, fontSize: 13, fontWeight: "600", textTransform: "capitalize" },
     monthChevron: { color: colors.primary, fontSize: 18, includeFontPadding: false, lineHeight: 18, textAlignVertical: "center" },
     dateStripScroll: { marginHorizontal: -16, marginVertical: 8 },
+    dateStripContainer: { position: "relative" },
+    todayJumpOverlay: { height: 70, position: "absolute", top: 4, width: 54, zIndex: 4 },
+    todayJumpLeft: { left: -16 },
+    todayJumpRight: { right: -16 },
+    todayFadeBand: { backgroundColor: colors.background, bottom: 0, left: 0, position: "absolute", top: 0 },
+    todayFadeBandRight: { left: undefined, right: 0 },
+    todayFadeBandWide: { opacity: 0.25, width: 54 },
+    todayFadeBandMedium: { opacity: 0.35, width: 38 },
+    todayFadeBandNarrow: { opacity: 0.4, width: 22 },
+    todayJumpButton: { alignItems: "center", height: 70, justifyContent: "center", width: 54 },
+    todayJumpArrow: { color: colors.primary, fontSize: 25, lineHeight: 28, marginTop: -3 },
     dateStrip: { gap: 8, paddingVertical: 4 },
-    dateButton: { alignItems: "center", backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderRadius: 13, borderWidth: 1, height: 62, justifyContent: "center", marginRight: 0, width: 48 },
-    selectedDateButton: { backgroundColor: colors.primary, borderColor: colors.primary },
-    todayDateButton: { backgroundColor: colors.orange, borderColor: colors.orange },
-    weekdayText: { color: colors.muted, fontSize: 11, fontWeight: "600", textTransform: "uppercase" },
-    dayNumberText: { color: colors.text, fontSize: 16, fontWeight: "700", marginTop: 4 },
+    dateButton: { alignItems: "center", borderRadius: 16, height: 62, marginRight: 0, position: "relative", width: 48 },
+    selectedDateButton: { backgroundColor: colors.blue },
+    weekdayText: { color: colors.muted, fontSize: 11, fontWeight: "600", position: "absolute", textAlign: "center", textTransform: "uppercase", top: 12, width: "100%" },
+    dayNumberText: { color: colors.text, fontSize: 16, fontWeight: "700", position: "absolute", textAlign: "center", top: 30, width: "100%" },
+    entryDot: { backgroundColor: colors.blue, borderRadius: 3, bottom: 7, height: 6, position: "absolute", width: 6 },
+    selectedEntryDot: { backgroundColor: "#FFFFFF" },
     selectedDateText: { color: colors.primaryText },
-    todayDateText: { color: colors.primaryText },
+    todayDateText: { color: colors.orange },
     skeletonList: { gap: 10, marginTop: 18 },
     skeletonMeal: { borderBottomColor: colors.surfaceAlt, borderBottomWidth: 1, gap: 10, paddingHorizontal: 4, paddingVertical: 14 },
     muted: { color: colors.muted, fontSize: 14 },
@@ -272,10 +270,5 @@ function createStyles(colors: { background: string; border: string; blue: string
     summaryTitle: { color: colors.muted, fontSize: 11, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase" },
     summaryCalories: { color: colors.text, fontSize: 20, fontWeight: "600", marginTop: 4 },
     summaryMacros: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 5 },
-    addButton: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 16, flexDirection: "row", gap: 8, height: 52, justifyContent: "center", width: "100%" },
-    addButtonEmoji: { fontSize: 22, lineHeight: 28 },
-    addButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
-    disabledButton: { opacity: 0.5 },
-    pressed: { opacity: 0.82 },
   });
 }

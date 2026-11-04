@@ -9,6 +9,7 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
   const [dailyMeals, setDailyMeals] = useState<DailyMealsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [datesWithEntries, setDatesWithEntries] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (!userId) {
@@ -24,7 +25,15 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
       setError(null);
       try {
         const result = await fetchDailyMeals(date);
-        if (active) setDailyMeals(result);
+        if (active) {
+          setDailyMeals(result);
+          setDatesWithEntries((current) => {
+            const next = new Set(current);
+            if (result.mealTypes.some((mealType) => mealType.entries.length > 0)) next.add(date);
+            else next.delete(date);
+            return next;
+          });
+        }
       } catch {
         if (active) setError("errors.mealsLoadFailed");
       } finally {
@@ -49,6 +58,7 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
           ? { ...mealType, entries: [...mealType.entries, createdEntry] }
           : mealType),
       }));
+      setDatesWithEntries((current) => new Set(current).add(date));
     } finally { finishLoading(); }
   }
 
@@ -75,8 +85,18 @@ export function useDailyMeals(userId: string | undefined, initialDate = localDat
           ? { ...mealType, entries: mealType.entries.filter((currentEntry) => currentEntry.id !== entry.id) }
           : mealType),
       }));
+      setDatesWithEntries((current) => {
+        if (!dailyMeals) return current;
+        const hasOtherEntries = dailyMeals.mealTypes.some((mealType) =>
+          mealType.entries.some((currentEntry) => !(mealType.id === mealTypeId && currentEntry.id === entry.id)),
+        );
+        if (hasOtherEntries) return current;
+        const next = new Set(current);
+        next.delete(date);
+        return next;
+      });
     } finally { finishLoading(); }
   }
 
-  return { date, setDate, dailyMeals, isLoading, error, addEntry, editEntry, removeEntry };
+  return { date, setDate, dailyMeals, datesWithEntries, isLoading, error, addEntry, editEntry, removeEntry };
 }

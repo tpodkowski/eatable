@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { isValidUserProfile, updateProfileFromCalories, updateProfileFromMacro } from "./profile-form.ts";
+import { isValidUserProfile, updateProfileFromCalories, updateProfileFromMacro } from "./profileForm.ts";
 
 const defaults = { dailyCalorieLimit: 2000, dailyProteinLimit: 100, dailyCarbohydratesLimit: 250, dailyFatLimit: 67 };
 

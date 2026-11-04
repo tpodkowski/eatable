@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getNextMeal } from "./meal-schedule.ts";
+import { getNextMeal } from "./mealSchedule.ts";
 
 const meals = ["08:00", "11:00", "14:00", "17:00", "20:00"].map((mealTime, sortOrder) => ({ id: String(sortOrder), name: `Meal ${sortOrder}`, mealTime, sortOrder, entries: [] }));
 

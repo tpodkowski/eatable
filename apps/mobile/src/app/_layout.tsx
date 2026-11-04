@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { AppScreen } from "../components/AppScreen";
-import { authClient } from "../lib/auth-client";
+import { authClient } from "../lib/authClient";
 import { readLanguagePreference } from "../lib/preferences";
 import i18n from "../i18n";
 import { AppThemeProvider, useAppTheme } from "../providers/AppThemeProvider";
@@ -44,7 +44,7 @@ function SessionRouter() {
   useEffect(() => {
     if (isPending) return;
     if (session && inAuthGroup) router.replace("/");
-    else if (!session && !inAuthGroup) router.replace("/(auth)/sign-in");
+    else if (!session && !inAuthGroup) router.replace("/(auth)/signIn");
   }, [inAuthGroup, isPending, router, session]);
 
   if (isPending || needsRedirect) return <LoadingScreen />;

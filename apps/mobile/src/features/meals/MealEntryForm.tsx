@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ActionButton } from "../../components/ActionButton";
 import { useAppTheme } from "../../providers/AppThemeProvider";
-import { validateMealEntryForm } from "./meal-entry-form-validation";
+import { validateMealEntryForm } from "./mealEntryFormValidation";
 
 interface MealEntryFormProps {
   onSave: (entry: Omit<CreateMealEntryInput, "date">) => Promise<void>;

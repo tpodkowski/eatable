@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { Animated, Easing, StyleSheet, View } from "react-native";
-import { isGlobalLoading, subscribeGlobalLoading } from "../lib/global-loading";
+import { isGlobalLoading, subscribeGlobalLoading } from "../lib/globalLoading";
 import { rainbowColors } from "../theme";
 
 const RUNNER_OPACITY = [0.08, 0.18, 0.34, 0.56, 0.8, 1, 1, 0.8, 0.56, 0.34, 0.18, 0.08];

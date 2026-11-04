@@ -12,8 +12,8 @@ import {
 import { ActionButton } from "../../components/ActionButton";
 import { AppScreen } from "../../components/AppScreen";
 import { BrandLogo } from "../../components/BrandLogo";
-import { authErrorKey } from "../../lib/auth-errors";
-import { authClient } from "../../lib/auth-client";
+import { authErrorKey } from "../../lib/authErrors";
+import { authClient } from "../../lib/authClient";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 
 const googleSignInEnabled = process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED === "true";
@@ -139,7 +139,7 @@ export function AuthScreen({ mode }: { mode: AuthMode }) {
       </Pressable>
       {!googleSignInEnabled ? <Text style={styles.hint}>{t("auth.googleHint")}</Text> : null}
 
-      <Pressable accessibilityRole="button" onPress={() => router.replace(mode === "sign-in" ? "/(auth)/sign-up" : "/(auth)/sign-in")} style={styles.switchMode}>
+      <Pressable accessibilityRole="button" onPress={() => router.replace(mode === "sign-in" ? "/(auth)/signUp" : "/(auth)/signIn")} style={styles.switchMode}>
         <Text style={styles.switchText}>
           {t(mode === "sign-in" ? "auth.noAccount" : "auth.hasAccount")}
           <Text style={styles.switchAction}>{t(mode === "sign-in" ? "auth.register" : "auth.signIn")}</Text>

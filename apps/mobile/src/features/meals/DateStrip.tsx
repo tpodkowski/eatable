@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { ScrollViewInstance } from "react-native";
 import { getDateStrip, localDateKey } from "../../lib/dates";
 import { useAppTheme } from "../../providers/AppThemeProvider";
-import { getDateStripArrowLayout } from "./date-strip-arrow-layout";
+import { getDateStripArrowLayout } from "./getDateStripArrowLayout";
 
 const DATE_STRIP_ITEM_WIDTH = 48;
 const DATE_STRIP_ITEM_INTERVAL = 56;

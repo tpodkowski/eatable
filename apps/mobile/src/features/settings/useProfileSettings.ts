@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { UserProfile } from "@eatable/shared";
-import { fetchUserProfile, updateUserProfile } from "../../lib/profile-api";
-import { isValidUserProfile } from "./profile-form";
+import { fetchUserProfile, updateUserProfile } from "../../lib/profileApi";
+import { isValidUserProfile } from "./profileForm";
 
 const DEFAULT_PROFILE: UserProfile = {
   dailyCalorieLimit: 2000,

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { DailyMealType } from "@eatable/shared";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { mealNameKey } from "../../lib/meal-name";
+import { mealNameKey } from "../../lib/mealName";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 
 export function MealCard({ mealType, onPress }: { mealType: DailyMealType; onPress: () => void }) {

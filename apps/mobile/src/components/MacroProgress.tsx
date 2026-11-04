@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useAppTheme } from "../providers/AppThemeProvider";
-import { getProgressRatio } from "../lib/macro-progress";
+import { getProgressRatio } from "../lib/macroProgress";
 
 export type MacroProgressItem = {
   key: "protein" | "fat" | "carbohydrates";

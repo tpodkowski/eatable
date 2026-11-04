@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { CreateMealEntryInput, DailyMealsResponse, MealEntry } from "@eatable/shared";
 import { localDateKey } from "../../lib/dates";
-import { createMealEntry, deleteMealEntry, fetchDailyMeals, updateMealEntry } from "../../lib/meals-api";
-import { beginGlobalLoading } from "../../lib/global-loading";
+import { createMealEntry, deleteMealEntry, fetchDailyMeals, updateMealEntry } from "../../lib/mealsApi";
+import { beginGlobalLoading } from "../../lib/globalLoading";
 
 export function useDailyMeals(userId: string | undefined, initialDate = localDateKey(new Date())) {
   const [date, setDate] = useState(initialDate);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { UserProfile } from "@eatable/shared";
-import { fetchUserProfile } from "../../lib/profile-api";
+import { fetchUserProfile } from "../../lib/profileApi";
 
 export function useDashboardProfile(userId: string | undefined) {
   const [profile, setProfile] = useState<UserProfile | null>(null);

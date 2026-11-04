@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getDateStripArrowLayout } from "./date-strip-arrow-layout.ts";
+import { getDateStripArrowLayout } from "./getDateStripArrowLayout.ts";
 
 test("keeps an opaque arrow button and fades only toward the center", () => {
   for (const direction of ["left", "right"]) {

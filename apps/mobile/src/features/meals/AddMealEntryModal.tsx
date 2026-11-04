@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
 import { formatDate } from "../../lib/dates";
-import { mealNameKey } from "../../lib/meal-name";
+import { mealNameKey } from "../../lib/mealName";
 import { useAppTheme } from "../../providers/AppThemeProvider";
 import { MealEntryForm } from "./MealEntryForm";
 

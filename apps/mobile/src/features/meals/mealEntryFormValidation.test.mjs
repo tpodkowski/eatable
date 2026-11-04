@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { validateMealEntryForm } from "./meal-entry-form-validation.ts";
+import { validateMealEntryForm } from "./mealEntryFormValidation.ts";
 
 const validForm = {
   title: "Oatmeal",

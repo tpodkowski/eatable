@@ -8,6 +8,13 @@ These instructions apply to the entire Eatable monorepo (`apps/api`, `apps/mobil
 - Write source code, identifiers, comments, user-facing strings, commit-facing technical notes, API descriptions, tests, configuration explanations, and documentation in English.
 - Keep existing non-English content only when a change does not touch it; translate or replace it when editing that content.
 
+## Source File Naming
+
+- Use PascalCase for component files and camelCase for hooks, helpers, and other source modules, matching each file to its component, hook, or primary export.
+- Never use kebab-case for source or test filenames. Name a test after the module it covers and append the package's established test suffix, preserving the module's casing (for example, `mealSchedule.test.mjs`).
+- Use dot-separated role suffixes before the extension for related files, such as `MyComponent.test.ts` or `MyComponent.story.ts`. Keep the base name's PascalCase or camelCase and use the extension required by the file type and package tooling.
+- Keep tool-required names for configuration and generated files when the tool depends on those exact filenames.
+
 ## Git Commit Attribution
 
 - Attribute commits to the real human user configured for the repository; never use an AI agent's name or identity as the commit author or committer.

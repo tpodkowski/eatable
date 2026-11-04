@@ -28,3 +28,10 @@ Short effects that each own one timer, animation, preference read, route synchro
 - When a screen contains a substantial, independently understandable UI section with its own rendering logic, interaction behavior, state, or styles, extract it into a named component in its own file within the feature directory. Do not leave a self-contained feature component embedded in a screen just because it is currently used once.
 - Pass the extracted component the smallest clear set of props it needs. Keep component-specific styles and behavior with that component; keep shared UI in the existing shared components directory.
 - Small, purely presentational fragments that have no independent behavior or meaningful reuse may remain inline when extraction would only add indirection.
+
+## File Naming
+
+- Use PascalCase for component files, matching the component name, and camelCase for hooks and utility modules, matching the hook or module's primary export.
+- Never use kebab-case in filenames. This applies to route files and test files as well as source modules.
+- Use dot-separated role suffixes before the extension for related files, such as `MyComponent.test.ts` or `MyComponent.story.ts`.
+- Name colocated test files after the module they cover, followed by `.test` and the package-required extension while preserving the module's casing. For example, `mealSchedule.ts` is tested by `mealSchedule.test.mjs`.

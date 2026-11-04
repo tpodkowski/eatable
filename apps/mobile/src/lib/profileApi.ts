@@ -1,6 +1,6 @@
 import type { UserProfile } from "@eatable/shared";
 import { Platform } from "react-native";
-import { authClient } from "./auth-client";
+import { authClient } from "./authClient";
 
 const apiUrl = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
 

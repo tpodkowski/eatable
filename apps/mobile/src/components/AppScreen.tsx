@@ -13,10 +13,11 @@ import { useAppTheme } from "../providers/AppThemeProvider";
 import { GlobalLoadingIndicator } from "./GlobalLoadingIndicator";
 
 interface AppScreenProps extends React.PropsWithChildren {
+  centeredContent?: boolean;
   footer?: ReactNode;
 }
 
-export function AppScreen({ children, footer }: AppScreenProps) {
+export function AppScreen({ children, centeredContent = false, footer }: AppScreenProps) {
   const { name, colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -29,7 +30,7 @@ export function AppScreen({ children, footer }: AppScreenProps) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.content}>{children}</View>
+          <View style={[styles.content, centeredContent && styles.centeredContent]}>{children}</View>
         </ScrollView>
         {footer ? (
           <View pointerEvents="box-none" style={styles.footer}>
@@ -47,6 +48,7 @@ function createStyles(colors: { background: string; border: string }) {
     screen: { flex: 1, backgroundColor: colors.background },
     scrollContent: { flexGrow: 1, paddingBottom: 84 },
     content: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 28, width: "100%", maxWidth: 560, alignSelf: "center" },
+    centeredContent: { flex: 1, justifyContent: "center" },
     footer: { alignItems: "center", backgroundColor: "transparent", bottom: 0, left: 0, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, position: "absolute", right: 0, zIndex: 1 },
     footerContent: { width: "100%", maxWidth: 520 },
   });

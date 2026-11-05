@@ -56,7 +56,7 @@ function SessionRouter() {
 function LoadingScreen() {
   const { colors } = useAppTheme();
   return (
-    <AppScreen>
+    <AppScreen centeredContent>
       <View style={styles.loading}>
         <ActivityIndicator color={colors.primary} size="large" />
       </View>
@@ -66,7 +66,7 @@ function LoadingScreen() {
 
 const styles = StyleSheet.create({
   appRoot: { flex: 1 },
-  loading: { alignItems: "center", justifyContent: "center", minHeight: 300 },
+  loading: { alignItems: "center", justifyContent: "center" },
   rainbowTrack: { flexDirection: "row", height: 3, left: 0, overflow: "hidden", position: "absolute", right: 0, top: 0, zIndex: 10 },
   rainbowSegment: { flex: 1 },
 });

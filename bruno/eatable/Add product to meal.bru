@@ -1,0 +1,44 @@
+meta {
+  name: Add product to meal
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/meals/{{mealTypeId}}/entries/from-product
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{sessionCookie}}
+}
+
+body:json {
+  {
+    "date": "{{date}}",
+    "productId": "{{productId}}",
+    "quantity": 250
+  }
+}
+
+docs {
+  Add a private product to a meal. Quantity is interpreted as grams or milliliters according to the product's nutritionBasis. The API calculates and snapshots the product name and nutrition values for that amount.
+
+  Example response (201):
+  {
+    "id": "a7906b25-4d20-465c-bbca-f5a922c4edb9",
+    "productId": "b7906b25-4d20-465c-bbca-f5a922c4edb9",
+    "title": "Oat milk",
+    "quantity": "250.00 ml",
+    "notes": null,
+    "calories": 116.25,
+    "protein": 2.75,
+    "carbohydrates": 16.75,
+    "fat": 3.75,
+    "createdAt": "2026-11-05T10:00:00.000Z"
+  }
+
+  Unknown categories or products (including products owned by another user) return 404. Invalid input returns 400; unauthenticated requests return 401.
+}

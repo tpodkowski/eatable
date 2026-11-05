@@ -44,7 +44,7 @@ After signing in, the app loads the daily plan from `GET /api/meals?date=YYYY-MM
 
 ### Bruno API collection
 
-Open `bruno/eatable` in Bruno and select the `local` environment. Set `sessionCookie` in a private Bruno environment or local override; keep session cookies out of checked-in files. The collection includes a daily-meals request and a request to create a product entry.
+Open `bruno/eatable` in Bruno and select the `local` environment. Set `sessionCookie` in a private Bruno environment or local override; keep session cookies out of checked-in files. The collection includes daily meals, meal entry, profile, and private product catalog requests, including adding a saved product to a meal.
 
 ### Google OAuth
 
@@ -87,7 +87,7 @@ The test deployment runs the API, PostgreSQL, and the Expo web export in Docker 
 5. Create a GitHub Actions environment named `test` and configure these environment secrets: `VPS_SSH_PRIVATE_KEY`, `VPS_KNOWN_HOSTS`, `GHCR_USERNAME`, and `GHCR_READ_TOKEN`. The read token needs permission to pull the package from GHCR. The workflow connects as `root@srv58.mikr.us` on port `10133`.
 6. Push to `staging`, or run the `Deploy test API` workflow manually. Verify `https://srv58-20133.wykr.es/health` and open `https://srv58-30133.wykr.es`. Inspect service logs with `docker compose -f /opt/eatable-test/compose.test.yaml logs -f api web`.
 
-The API image currently runs Better Auth's schema migration and the app migrations on startup. The PostgreSQL data lives in the `postgres_test_data` Docker volume. Back it up off-server before destructive operations; removing the volume deletes the test database. For a quick manual restart, run `cd /opt/eatable-test && docker compose -f compose.test.yaml up -d`.
+The API image runs Better Auth's schema migration and initializes the app schema on startup. App schema initialization is for a fresh database; it does not upgrade existing application tables. Reset an older test database before deploying a schema change that requires new columns or types. The PostgreSQL data lives in the `postgres_test_data` Docker volume. Back it up off-server before destructive operations; removing the volume deletes the test database. For a quick manual restart, run `cd /opt/eatable-test && docker compose -f compose.test.yaml up -d`.
 
 ### GitHub Actions secrets
 

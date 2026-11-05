@@ -1,0 +1,22 @@
+meta {
+  name: Delete product
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/api/products/{{productId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+docs {
+  Delete a private product. Existing meal entries retain their snapshots and are detached from the product. Unknown or other user's products return 404; unauthenticated requests return 401.
+
+  Example response:
+  { "success": true }
+}

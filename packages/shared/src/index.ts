@@ -13,6 +13,7 @@ export interface UserProfile {
 
 export interface MealEntry {
   id: string;
+  productId: string | null;
   title: string;
   quantity: string | null;
   notes: string | null;
@@ -21,6 +22,39 @@ export interface MealEntry {
   carbohydrates: number | null;
   fat: number | null;
   createdAt: string;
+}
+
+export type ProductNutritionBasis = "g" | "ml";
+
+export interface Product {
+  id: string;
+  name: string;
+  brand: string | null;
+  barcode: string | null;
+  nutritionBasis: ProductNutritionBasis;
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductInput {
+  name: string;
+  brand?: string | null;
+  barcode?: string | null;
+  nutritionBasis: ProductNutritionBasis;
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
+}
+
+export interface AddProductToMealInput {
+  date: string;
+  productId: string;
+  quantity: number;
 }
 
 export interface CreateMealEntryInput {

@@ -1,0 +1,19 @@
+meta {
+  name: Get product
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/products/{{productId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+docs {
+  Fetch one product from the signed-in user's catalog. Products owned by another user return 404. Invalid IDs return 400 and unauthenticated requests return 401.
+}

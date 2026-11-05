@@ -2,8 +2,9 @@ import type { FastifyPluginAsync } from "fastify";
 import { fromNodeHeaders } from "better-auth/node";
 import type { DailyMealsResponse, MealEntry } from "@eatable/shared";
 import { auth, pool } from "../auth.js";
-import { createMealEntry, deleteMealEntry, getDailyMeals, updateMealEntry } from "../meals/service.js";
+import { createMealEntry, createProductMealEntry, deleteMealEntry, getDailyMeals, updateMealEntry } from "../meals/service.js";
 import { isValidMealDate, validateMealEntryInput } from "../meals.js";
+import { validateProductMealInput } from "../products.js";
 
 export const registerMealRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Querystring: { date?: string }; Reply: DailyMealsResponse | { error: string } }>("/api/meals", async (request, reply) => {
@@ -28,6 +29,23 @@ export const registerMealRoutes: FastifyPluginAsync = async (app) => {
     if (!validated.success) return reply.status(400).send({ error: validated.error });
     const entry = await createMealEntry(pool, session.user.id, request.params.mealTypeId, validated.data);
     if (!entry) return reply.status(404).send({ error: "mealNotFound" });
+    return reply.status(201).send(entry);
+  });
+
+  app.post<{
+    Params: { mealTypeId: string };
+    Body: unknown;
+    Reply: MealEntry | { error: string };
+  }>("/api/meals/:mealTypeId/entries/from-product", async (request, reply) => {
+    const session = await auth.api.getSession({ headers: fromNodeHeaders(request.headers) });
+    if (!session) return reply.status(401).send({ error: "Unauthorized" });
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(request.params.mealTypeId)) {
+      return reply.status(400).send({ error: "invalidMealTypeId" });
+    }
+    const validated = validateProductMealInput(request.body);
+    if (!validated.success) return reply.status(400).send({ error: validated.error });
+    const entry = await createProductMealEntry(pool, session.user.id, request.params.mealTypeId, validated.data);
+    if (!entry) return reply.status(404).send({ error: "mealOrProductNotFound" });
     return reply.status(201).send(entry);
   });
 

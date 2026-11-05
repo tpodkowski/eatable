@@ -1,0 +1,38 @@
+meta {
+  name: List products
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/products?q={{productSearch}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+docs {
+  List the signed-in user's private products. The optional q query searches product name, brand, and barcode.
+
+  Example response:
+  [
+    {
+      "id": "b7906b25-4d20-465c-bbca-f5a922c4edb9",
+      "name": "Oat milk",
+      "brand": "Oats Co",
+      "barcode": "04006381333931",
+      "nutritionBasis": "ml",
+      "calories": 46.5,
+      "protein": 1.1,
+      "carbohydrates": 6.7,
+      "fat": 1.5,
+      "createdAt": "2026-11-05T10:00:00.000Z",
+      "updatedAt": "2026-11-05T10:00:00.000Z"
+    }
+  ]
+
+  Unauthenticated requests return 401.
+}

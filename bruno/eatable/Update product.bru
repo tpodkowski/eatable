@@ -1,0 +1,33 @@
+meta {
+  name: Update product
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{baseUrl}}/api/products/{{productId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{sessionCookie}}
+}
+
+body:json {
+  {
+    "name": "Oat drink",
+    "brand": "Oats Co",
+    "barcode": "4006381333931",
+    "nutritionBasis": "ml",
+    "calories": 44.2,
+    "protein": 1.2,
+    "carbohydrates": 6.1,
+    "fat": 1.4
+  }
+}
+
+docs {
+  Replace a private product's details. Existing meal entries keep their nutrition and name snapshots. A duplicate barcode returns 409; an unknown or other user's product returns 404.
+}

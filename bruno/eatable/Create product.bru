@@ -1,0 +1,35 @@
+meta {
+  name: Create product
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/products
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{sessionCookie}}
+}
+
+body:json {
+  {
+    "name": "Oat milk",
+    "brand": "Oats Co",
+    "barcode": "4006381333931",
+    "nutritionBasis": "ml",
+    "calories": 46.5,
+    "protein": 1.1,
+    "carbohydrates": 6.7,
+    "fat": 1.5
+  }
+}
+
+docs {
+  Create a private product. Barcode is optional. Nutrition values are per 100 g or 100 ml according to nutritionBasis. GTIN values are validated and stored in canonical 14-digit form.
+
+  A duplicate barcode in the same user's catalog returns 409. Invalid input returns 400; unauthenticated requests return 401.
+}

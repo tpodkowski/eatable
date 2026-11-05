@@ -19,7 +19,7 @@ import { useTomorrowMeals } from "./useTomorrowMeals";
 export function DashboardScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { colors, name: themeName } = useAppTheme();
+  const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { data: session } = authClient.useSession();
   const { dailyMeals, isLoading, error } = useDailyMeals(session?.user.id);
@@ -118,7 +118,7 @@ export function DashboardScreen() {
       <View style={styles.tilesRow}>
         <Pressable accessibilityRole="button" onPress={() => router.push("/meals")} style={({ pressed }) => [styles.tile, styles.mealsTile, pressed && styles.pressed]}>
           <LinearGradient
-            colors={themeName === "dark" ? ["#6D28D9", "#1D4ED8"] : [colors.primary, colors.blue]}
+            colors={[colors.primary, colors.primary]}
             end={{ x: 0.5, y: 1 }}
             pointerEvents="none"
             start={{ x: 0.5, y: 0 }}
@@ -139,7 +139,7 @@ export function DashboardScreen() {
   );
 }
 
-function createStyles(colors: { border: string; blue: string; danger: string; muted: string; orange: string; pink: string; primary: string; success: string; surfaceAlt: string; text: string; violet: string }) {
+function createStyles(colors: { border: string; blue: string; danger: string; muted: string; orange: string; pink: string; primary: string; primaryText: string; success: string; surfaceAlt: string; text: string; violet: string }) {
   return StyleSheet.create({
     header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
     date: { color: colors.muted, fontSize: 14, textTransform: "capitalize" },
@@ -173,8 +173,8 @@ function createStyles(colors: { border: string; blue: string; danger: string; mu
     tilesRow: { flexDirection: "row", gap: 12, marginTop: 12 },
     tile: { alignItems: "flex-start", backgroundColor: "transparent", borderColor: colors.border, borderRadius: 14, borderWidth: 1, flex: 1, gap: 7, justifyContent: "center", minHeight: 112, overflow: "hidden", padding: 14 },
     mealsTile: { borderColor: colors.primary },
-    mealsTileTitle: { color: "#FFFFFF" },
-    mealsTileSubtitle: { color: "#F1E7FF" },
+    mealsTileTitle: { color: colors.primaryText },
+    mealsTileSubtitle: { color: colors.primaryText, opacity: 0.8 },
     tileGradient: { ...StyleSheet.absoluteFill, borderRadius: 14 },
     comingSoonTile: { backgroundColor: colors.surfaceAlt, opacity: 0.58 },
     tileEmoji: { fontSize: 23 },

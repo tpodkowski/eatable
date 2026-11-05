@@ -23,7 +23,7 @@ type DateStripProps = {
 
 export function DateStrip({ anchor, date, datesWithEntries, caloriesByDate, dailyCalorieLimit, locale, onAnchorChange, onDateChange }: DateStripProps) {
   const { t } = useTranslation();
-  const { colors, name: themeName } = useAppTheme();
+  const { colors } = useAppTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const dateStripRef = useRef<ScrollViewInstance>(null);
   const [dateStripWidth, setDateStripWidth] = useState(0);
@@ -75,7 +75,7 @@ export function DateStrip({ anchor, date, datesWithEntries, caloriesByDate, dail
           const accessibilityDate = new Intl.DateTimeFormat(locale, { dateStyle: "full" }).format(stripDate);
           return (
             <Pressable key={dayKey} accessibilityLabel={accessibilityDate} accessibilityRole="button" accessibilityState={{ selected: isSelected }} onPress={() => onDateChange(dayKey)} style={styles.dateButton}>
-              {isSelected ? <LinearGradient colors={themeName === "dark" ? ["#6D28D9", "#1D4ED8"] : [colors.primary, colors.blue]} end={{ x: 0.5, y: 1 }} start={{ x: 0.5, y: 0 }} style={styles.selectedDateGradient} /> : null}
+              {isSelected ? <LinearGradient colors={[colors.primary, colors.primary]} end={{ x: 0.5, y: 1 }} start={{ x: 0.5, y: 0 }} style={styles.selectedDateGradient} /> : null}
               <Text style={[styles.weekdayText, isSelected && styles.selectedDateText]}>{weekday}</Text>
               <Text style={[styles.dayNumberText, isSelected && styles.selectedDateText]}>{day}</Text>
               <View style={[styles.entryDot, hasEntries ? (isOverLimit ? styles.overLimitEntryDot : styles.withinLimitEntryDot) : styles.hiddenEntryDot, isSelected && styles.selectedEntryDot]} />
@@ -113,7 +113,7 @@ function createStyles(colors: { background: string; blue: string; danger: string
     todayJumpArrow: { color: colors.primary, fontSize: 25, lineHeight: 28 },
     items: { gap: 8, paddingVertical: 4 },
     dateButton: { alignItems: "center", borderRadius: 16, gap: 4, justifyContent: "center", marginRight: 0, minHeight: 64, overflow: "hidden", paddingVertical: 8, width: 48 },
-    selectedDateGradient: { ...StyleSheet.absoluteFillObject, borderRadius: 16 },
+    selectedDateGradient: { ...StyleSheet.absoluteFill, borderRadius: 16 },
     weekdayText: { color: colors.muted, fontSize: 11, fontWeight: "600", lineHeight: 14, textAlign: "center", textTransform: "uppercase", width: "100%" },
     dayNumberText: { color: colors.text, fontSize: 16, fontWeight: "700", lineHeight: 20, textAlign: "center", width: "100%" },
     entryDot: { borderRadius: 3, height: 6, width: 6 },

@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text } from "react-native";
-import { rainbowColors } from "../theme";
+import { useAppTheme } from "../providers/AppThemeProvider";
 
 interface BrandLogoProps {
   accessibilityLabel?: string;
@@ -7,10 +7,11 @@ interface BrandLogoProps {
 }
 
 export function BrandLogo({ accessibilityLabel, onPress }: BrandLogoProps) {
+  const { colors } = useAppTheme();
   const logo = (
     <Text style={styles.wordmark}>
       {"EATABLE".split("").map((letter, index) => (
-        <Text key={`${letter}-${index}`} style={{ color: rainbowColors[index % rainbowColors.length] }}>{letter}</Text>
+        <Text key={`${letter}-${index}`} style={{ color: colors.primary }}>{letter}</Text>
       ))}
       <Text style={styles.emoji}> 🍝</Text>
     </Text>

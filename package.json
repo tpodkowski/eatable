@@ -1,8 +1,10 @@
 {
   "name": "eatable",
   "private": true,
+  "packageManager": "npm@11.20.0",
   "workspaces": [
     "apps/*",
+    "services/*",
     "packages/*"
   ],
   "engines": {

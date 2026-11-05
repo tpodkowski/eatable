@@ -17,12 +17,31 @@ services:
     networks:
       - internal
 
+  open-food-facts-db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${OPEN_FOOD_FACTS_POSTGRES_DB:?Set OPEN_FOOD_FACTS_POSTGRES_DB in the server .env}
+      POSTGRES_USER: ${OPEN_FOOD_FACTS_POSTGRES_USER:?Set OPEN_FOOD_FACTS_POSTGRES_USER in the server .env}
+      POSTGRES_PASSWORD: ${OPEN_FOOD_FACTS_POSTGRES_PASSWORD:?Set OPEN_FOOD_FACTS_POSTGRES_PASSWORD in the server .env}
+    volumes:
+      - postgres_open_food_facts_test_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - internal
+
   api:
     image: ${IMAGE_NAME:?Set IMAGE_NAME in the server .env}:${IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in the server .env}
+      OPEN_FOOD_FACTS_DATABASE_URL: ${OPEN_FOOD_FACTS_DATABASE_URL:?Set OPEN_FOOD_FACTS_DATABASE_URL in the server .env}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in the server .env}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:?Set BETTER_AUTH_URL in the server .env}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
@@ -34,6 +53,8 @@ services:
       - "20133:3000"
     depends_on:
       db:
+        condition: service_healthy
+      open-food-facts-db:
         condition: service_healthy
     networks:
       - internal
@@ -61,6 +82,7 @@ services:
 
 volumes:
   postgres_test_data:
+  postgres_open_food_facts_test_data:
 
 networks:
   internal:

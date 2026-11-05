@@ -1,20 +1,44 @@
 import type { FastifyPluginAsync } from "fastify";
 import { fromNodeHeaders } from "better-auth/node";
-import type { Product } from "@eatable/shared";
+import type { Product, ProductSearchResult, ProvidedProduct } from "@eatable/shared";
+import { normalizeGtin } from "@eatable/shared";
+import { getOpenFoodFactsProductByBarcode, OpenFoodFactsProviderError } from "@eatable/product-open-food-facts";
 import { auth, pool } from "../auth.js";
 import { validateProductInput } from "../products.js";
-import { createProduct, deleteProduct, getProduct, isDuplicateBarcodeError, listProducts, updateProduct } from "../products/service.js";
+import { createProduct, deleteProduct, getProduct, isDuplicateBarcodeError, updateProduct } from "../products/service.js";
+import { createProductSearchProviders, searchProductProviders } from "../products/providerRegistry.js";
 
 const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 
 export const registerProductRoutes: FastifyPluginAsync = async (app) => {
-  app.get<{ Querystring: { q?: string }; Reply: Product[] | { error: string } }>("/api/products", async (request, reply) => {
+  app.get<{ Params: { barcode: string }; Reply: ProvidedProduct | { error: string } }>("/api/products/barcode/:barcode", async (request, reply) => {
+    const session = await auth.api.getSession({ headers: fromNodeHeaders(request.headers) });
+    if (!session) return reply.status(401).send({ error: "Unauthorized" });
+    if (!normalizeGtin(request.params.barcode)) return reply.status(400).send({ error: "invalidBarcode" });
+    try {
+      return await getOpenFoodFactsProductByBarcode(request.params.barcode);
+    } catch (error) {
+      if (error instanceof OpenFoodFactsProviderError) {
+        if (error.kind === "notFound") return reply.status(404).send({ error: "productNotFound" });
+        if (error.kind === "timeout") return reply.status(504).send({ error: "providerTimeout" });
+        return reply.status(502).send({ error: "providerUnavailable" });
+      }
+      throw error;
+    }
+  });
+
+  app.get<{ Querystring: { q?: string }; Reply: ProductSearchResult[] | { error: string } }>("/api/products", async (request, reply) => {
     const session = await auth.api.getSession({ headers: fromNodeHeaders(request.headers) });
     if (!session) return reply.status(401).send({ error: "Unauthorized" });
     if (request.query.q !== undefined && (typeof request.query.q !== "string" || request.query.q.length > 100)) {
       return reply.status(400).send({ error: "invalidSearch" });
     }
-    return listProducts(pool, session.user.id, request.query.q);
+    const query = request.query.q?.trim();
+    if (!query) {
+      const userProvider = createProductSearchProviders(pool, session.user.id)[0];
+      return userProvider.search("");
+    }
+    return searchProductProviders(createProductSearchProviders(pool, session.user.id), query);
   });
 
   app.get<{ Params: { productId: string }; Reply: Product | { error: string } }>("/api/products/:productId", async (request, reply) => {

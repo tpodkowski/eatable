@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import type { Product, ProductInput } from "@eatable/shared";
+import type { Product, ProductInput, ProductSearchResult } from "@eatable/shared";
 
 type ProductRow = {
   id: string;
@@ -43,6 +43,27 @@ export async function listProducts(pool: Pool, userId: string, search?: string):
     [userId, term || null, term ? `%${term.replace(/[\\%_]/g, "\\$&")}%` : null, term ? term.replace(/\D/g, "").padStart(14, "0") : null],
   );
   return result.rows.map(toProduct);
+}
+
+export function toUserProductSearchResult(product: Product): ProductSearchResult {
+  return {
+    id: `user:${product.id}`,
+    provider: "user",
+    providerProductId: product.id,
+    name: product.name,
+    brand: product.brand,
+    barcode: product.barcode,
+    nutritionBasis: product.nutritionBasis === "g" ? "100g" : "100ml",
+    calories: product.calories,
+    protein: product.protein,
+    carbohydrates: product.carbohydrates,
+    fat: product.fat,
+    imageUrl: null,
+    imageAttribution: null,
+    imageLicense: null,
+    license: "user-provided",
+    attribution: "User-provided",
+  };
 }
 
 export async function getProduct(pool: Pool, userId: string, productId: string): Promise<Product | null> {

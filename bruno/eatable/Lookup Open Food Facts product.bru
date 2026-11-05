@@ -1,0 +1,39 @@
+meta {
+  name: Lookup Open Food Facts product
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/products/barcode/4006381333931
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+docs {
+  Look up a product by GTIN using Open Food Facts. A successful response is cached in the provider's local table and includes source and licensing attribution. Missing products return 404, provider timeouts return 504, provider failures return 502, invalid barcodes return 400, and unauthenticated requests return 401.
+
+  Example response:
+  {
+    "id": "open-food-facts:4006381333931",
+    "provider": "open-food-facts",
+    "providerProductId": "4006381333931",
+    "name": "Example product",
+    "brand": "Example brand",
+    "barcode": "04006381333931",
+    "nutritionBasis": "100g",
+    "calories": 250,
+    "protein": 8,
+    "carbohydrates": null,
+    "fat": 4,
+    "imageUrl": null,
+    "imageAttribution": "Open Food Facts contributors",
+    "imageLicense": "See the product image's license on Open Food Facts",
+    "license": "ODbL-1.0",
+    "attribution": "Data from Open Food Facts (https://world.openfoodfacts.org/)"
+  }
+}

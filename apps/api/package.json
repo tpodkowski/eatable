@@ -4,25 +4,26 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npm run db:migrate && tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "dev": "npm run build --workspace=@eatable/product-open-food-facts && npm run db:migrate && tsx watch src/index.ts",
+    "build": "npm run build --workspace=@eatable/product-open-food-facts && tsc -p tsconfig.json",
     "start": "npm run db:migrate && tsx src/index.ts",
     "db:migrate": "auth migrate --config src/auth.ts --yes",
-    "test": "node --import tsx --test src/meals.test.ts src/meals/service.test.ts src/products.test.ts src/products/service.test.ts src/profile.test.ts src/app.test.ts",
+    "test": "npm run build --workspace=@eatable/product-open-food-facts && node --import tsx --test src/meals.test.ts src/meals/service.test.ts src/products.test.ts src/products/service.test.ts src/products/providerRegistry.test.ts src/profile.test.ts src/app.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@better-auth/expo": "1.7.15",
     "@eatable/shared": "*",
     "@fastify/cors": "^11.1.0",
+    "@eatable/product-open-food-facts": "*",
     "better-auth": "1.7.15",
     "fastify": "^5.6.2",
     "pg": "^8.16.3"
   },
   "devDependencies": {
-    "auth": "1.7.15",
     "@types/node": "^22.15.30",
     "@types/pg": "^8.15.5",
+    "auth": "1.7.15",
     "tsx": "^4.19.4",
     "typescript": "~5.9.2"
   }

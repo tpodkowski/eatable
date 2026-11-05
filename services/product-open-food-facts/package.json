@@ -1,0 +1,30 @@
+{
+  "name": "@eatable/product-open-food-facts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "npm run build --workspace=@eatable/shared && tsc -p tsconfig.json",
+    "db:generate": "drizzle-kit generate --config drizzle.config.ts",
+    "test": "npm run build --workspace=@eatable/shared && node --import tsx --test src/openFoodFacts.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@eatable/shared": "*",
+    "drizzle-orm": "^0.45.4",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/pg": "^8.15.5",
+    "drizzle-kit": "^0.31.11",
+    "tsx": "^4.19.4",
+    "typescript": "~5.9.2"
+  }
+}

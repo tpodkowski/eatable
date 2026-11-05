@@ -16,6 +16,23 @@ services:
       timeout: 5s
       retries: 10
 
+  open-food-facts-db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: open_food_facts
+      POSTGRES_USER: open_food_facts
+      POSTGRES_PASSWORD: open_food_facts
+    ports:
+      - "5433:5432"
+    volumes:
+      - open_food_facts_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U open_food_facts -d open_food_facts"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   api:
     build:
       context: .
@@ -23,6 +40,7 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://eatable:eatable@db:5432/eatable
+      OPEN_FOOD_FACTS_DATABASE_URL: postgres://open_food_facts:open_food_facts@open-food-facts-db:5432/open_food_facts
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-eatable-local-development-secret-replace-for-production-2026}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
@@ -34,6 +52,8 @@ services:
       - "3000:3000"
     depends_on:
       db:
+        condition: service_healthy
+      open-food-facts-db:
         condition: service_healthy
 
   mobile:
@@ -57,3 +77,4 @@ services:
 
 volumes:
   postgres_data:
+  open_food_facts_data:

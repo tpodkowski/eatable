@@ -1,24 +1,12 @@
+import { normalizeGtin } from "@eatable/shared";
 import type { ProductInput, ProductNutritionBasis } from "@eatable/shared";
+
+export { normalizeGtin } from "@eatable/shared";
 
 export type ValidatedProductInput = ProductInput & { brand: string | null; barcode: string | null };
 export type ProductInputValidation =
   | { success: true; data: ValidatedProductInput }
   | { success: false; error: string };
-
-export function normalizeGtin(value: string): string | null {
-  const digits = value.trim();
-  if (!/^\d+$/.test(digits) || ![8, 12, 13, 14].includes(digits.length)) return null;
-
-  let sum = 0;
-  let multiplier = 3;
-  for (let index = digits.length - 2; index >= 0; index -= 1) {
-    sum += Number(digits[index]) * multiplier;
-    multiplier = multiplier === 3 ? 1 : 3;
-  }
-  const checkDigit = (10 - (sum % 10)) % 10;
-  if (checkDigit !== Number(digits.at(-1))) return null;
-  return digits.padStart(14, "0");
-}
 
 function isNutritionValue(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100_000

@@ -36,6 +36,7 @@ describe("product API authentication", () => {
     try {
       const requests = [
         { method: "GET", url: "/api/products" },
+        { method: "GET", url: "/api/products/barcode/4006381333931" },
         { method: "GET", url: "/api/products/b7906b25-4d20-465c-bbca-f5a922c4edb9" },
         { method: "POST", url: "/api/products", payload: {} },
         { method: "PUT", url: "/api/products/b7906b25-4d20-465c-bbca-f5a922c4edb9", payload: {} },

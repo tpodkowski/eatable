@@ -30,13 +30,13 @@ Run only one service with `npm run dev:api` or `npm run dev:mobile`.
 
 ## Start z Dockerem
 
-Uruchom API, PostgreSQL i serwer Expo:
+Uruchom API, dwie niezależne bazy PostgreSQL (aplikacji i Open Food Facts) oraz serwer Expo:
 
 ```sh
 docker compose up --build
 ```
 
-API będzie dostępne pod `http://localhost:3000`, Expo/Metro na porcie `8081`, a PostgreSQL pod `localhost:5432`. Expo/Metro obserwuje pliki z repozytorium podmontowane jako wolumen — zapis zmian w `apps/mobile` automatycznie odświeża aplikację. Dane bazy są przechowywane w wolumenie `postgres_data`. Lokalny zestaw używa danych dostępowych `eatable` / `eatable` i bazy `eatable`.
+The API is available at `http://localhost:3000`, Expo/Metro at port `8081`, the application database at `localhost:5432`, and the Open Food Facts database at `localhost:5433`. Expo/Metro watches the repository mounted as a volume and refreshes the app when files in `apps/mobile` change. Database data is stored separately in the `postgres_data` and `openfoodfacts_data` volumes. The local databases use the development credentials documented in `compose.yaml`.
 
 Przy pierwszym uruchomieniu API tworzy wymagane tabele uwierzytelniania. Rejestracja i logowanie e-mailem działają od razu. Hasła muszą mieć co najmniej 8 znaków; sesje mobilne są przechowywane w systemowym SecureStore.
 
@@ -58,36 +58,38 @@ Google SSO on iOS and Android requires a native development build because Expo G
 Start only the database if you prefer to run the API on the host with `npm run dev:api`:
 
 ```sh
-docker compose up -d db
-DATABASE_URL=postgres://eatable:eatable@localhost:5432/eatable npm run dev:api
+docker compose up -d db open-food-facts-db
+DATABASE_URL=postgres://eatable:eatable@localhost:5432/eatable OPEN_FOOD_FACTS_DATABASE_URL=postgres://open_food_facts:open_food_facts@localhost:5433/open_food_facts npm run dev:api
 ```
 
 Zatrzymanie kontenerów: `docker compose down`. Aby usunąć również lokalne dane bazy: `docker compose down -v`.
 
-## Struktura
+## Repository structure
 
 ```text
 apps/
-  api/       Fastify API
-  mobile/    aplikacja Expo (iOS, Android, opcjonalnie web)
+  api/       Application API and provider orchestration
+  mobile/    Expo app for iOS, Android, and web
+services/
+  product-open-food-facts/  Independent provider module, database schema, and migrations
 packages/
-  shared/    wspólne typy i kontrakty
+  shared/    Shared types and contracts
 ```
 
 ## Test deployment on a VPS
 
-The test deployment runs the API, PostgreSQL, and the Expo web export in Docker on the Mikrus VPS. PostgreSQL has no published host port and is reachable only on the private Compose network. GitHub Actions builds immutable API and web images for each commit pushed to `staging`, publishes them to GHCR, uploads the Compose configuration, and updates the test stack over SSH. The API is published on Mikrus port `20133` at `https://srv58-20133.wykr.es`; the web app is published on port `30133` at `https://srv58-30133.wykr.es`. Mikrus's proxy provides HTTPS for both hostnames. The production environment is intentionally not configured yet.
+The test deployment runs the API, separate application and Open Food Facts PostgreSQL databases, and the Expo web export in Docker on the Mikrus VPS. Both databases have no published host port and are reachable only on the private Compose network. GitHub Actions builds immutable API and web images for each commit pushed to `staging`, publishes them to GHCR, uploads the Compose configuration, and updates the test stack over SSH. The API is published on Mikrus port `20133` at `https://srv58-20133.wykr.es`; the web app is published on port `30133` at `https://srv58-30133.wykr.es`. Mikrus's proxy provides HTTPS for both hostnames. The production environment is intentionally not configured yet.
 
 ### One-time VPS setup
 
 1. Check that Docker Engine and the Docker Compose plugin work on the Mikrus VPS. Mikrus documents Docker installation and requires using its assigned application ports. This setup uses SSH host `srv58.mikr.us`, SSH port `10133`, and application ports `20133` and `30133`.
 2. Add an SSH public key for root through the Mikrus panel. Add its private key as the GitHub Environment secret `VPS_SSH_PRIVATE_KEY`. Add the verified SSH host key for `[srv58.mikr.us]:10133` as `VPS_KNOWN_HOSTS`.
-3. Create `/opt/eatable-test`, copy `.env.test.example` there as `.env`, and set owner-only permissions (`chmod 600 /opt/eatable-test/.env`). Replace the database password and auth secret placeholders. Use a long random alphanumeric database password so the same value can safely appear in `DATABASE_URL`; generate `BETTER_AUTH_SECRET` with `openssl rand -base64 32`.
+3. Create `/opt/eatable-test`, copy `.env.test.example` there as `.env`, and set owner-only permissions (`chmod 600 /opt/eatable-test/.env`). Replace both database password placeholders and the auth secret. Use long random alphanumeric database passwords so they can safely appear in their connection URLs; generate `BETTER_AUTH_SECRET` with `openssl rand -base64 32`.
 4. Keep `IMAGE_NAME` as `ghcr.io/tpodkowski/eatable-api` and `WEB_IMAGE_NAME` as `ghcr.io/tpodkowski/eatable-web`. `BETTER_AUTH_URL` is `https://srv58-20133.wykr.es`; `CLIENT_ORIGINS` must include `https://srv58-30133.wykr.es` for browser sign-in and API requests.
 5. Create a GitHub Actions environment named `test` and configure these environment secrets: `VPS_SSH_PRIVATE_KEY`, `VPS_KNOWN_HOSTS`, `GHCR_USERNAME`, and `GHCR_READ_TOKEN`. The read token needs permission to pull the package from GHCR. The workflow connects as `root@srv58.mikr.us` on port `10133`.
 6. Push to `staging`, or run the `Deploy test API` workflow manually. Verify `https://srv58-20133.wykr.es/health` and open `https://srv58-30133.wykr.es`. Inspect service logs with `docker compose -f /opt/eatable-test/compose.test.yaml logs -f api web`.
 
-The API image runs Better Auth's schema migration and initializes the app schema on startup. App schema initialization is for a fresh database; it does not upgrade existing application tables. Reset an older test database before deploying a schema change that requires new columns or types. The PostgreSQL data lives in the `postgres_test_data` Docker volume. Back it up off-server before destructive operations; removing the volume deletes the test database. For a quick manual restart, run `cd /opt/eatable-test && docker compose -f compose.test.yaml up -d`.
+The API image runs Better Auth's schema migration and initializes both application and provider schemas on startup. The startup migration also moves any existing Open Food Facts rows from the old application database table into the separate provider database. Schema initialization does not upgrade other existing application tables. Reset an older test database before deploying a schema change that requires new columns or types. Data lives in the `postgres_test_data` and `postgres_open_food_facts_test_data` Docker volumes. Back up both off-server before destructive operations; removing either volume deletes that database. For a quick manual restart, run `cd /opt/eatable-test && docker compose -f compose.test.yaml up -d`.
 
 ### GitHub Actions secrets
 

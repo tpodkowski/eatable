@@ -8,7 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "node --experimental-strip-types --test src/theme.test.mjs src/lib/initials.test.mjs src/lib/dates.test.mjs src/features/meals/mealSchedule.test.mjs src/features/meals/mealEntryFormValidation.test.mjs src/features/meals/getDateStripArrowLayout.test.mjs src/features/settings/profileForm.test.mjs src/features/dashboard/macroProgress.test.mjs",
+    "test": "node --experimental-strip-types --test src/theme.test.mjs src/lib/initials.test.mjs src/lib/dates.test.mjs src/features/meals/mealSchedule.test.mjs src/features/meals/mealEntryFormValidation.test.mjs src/features/meals/getDateStripArrowLayout.test.mjs src/features/settings/profileForm.test.mjs src/features/dashboard/macroProgress.test.mjs src/features/products/filterProducts.test.mjs",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },

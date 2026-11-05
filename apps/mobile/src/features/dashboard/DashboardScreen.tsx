@@ -128,11 +128,11 @@ export function DashboardScreen() {
           <Text style={[styles.tileTitle, styles.mealsTileTitle]}>{t("dashboard.openMeals")}</Text>
           <Text style={[styles.tileSubtitle, styles.mealsTileSubtitle]}>{t("dashboard.mealsSubtitle")}</Text>
         </Pressable>
-        <View accessibilityRole="text" style={[styles.tile, styles.comingSoonTile]}>
-          <Text style={styles.tileEmoji}>📖</Text>
-          <Text style={styles.tileTitle}>{t("dashboard.recipes")}</Text>
-          <Text style={styles.tileSubtitle}>{t("dashboard.recipesComingSoon")}</Text>
-        </View>
+        <Pressable accessibilityRole="button" onPress={() => router.push("/products")} style={({ pressed }) => [styles.tile, styles.productsTile, pressed && styles.pressed]}>
+          <Text style={styles.tileEmoji}>🔎</Text>
+          <Text style={styles.tileTitle}>{t("dashboard.products")}</Text>
+          <Text style={styles.tileSubtitle}>{t("dashboard.productsSubtitle")}</Text>
+        </Pressable>
       </View>
 
     </AppScreen>
@@ -176,7 +176,7 @@ function createStyles(colors: { border: string; blue: string; danger: string; mu
     mealsTileTitle: { color: colors.primaryText },
     mealsTileSubtitle: { color: colors.primaryText, opacity: 0.8 },
     tileGradient: { ...StyleSheet.absoluteFill, borderRadius: 14 },
-    comingSoonTile: { backgroundColor: colors.surfaceAlt, opacity: 0.58 },
+    productsTile: { backgroundColor: colors.surfaceAlt },
     tileEmoji: { fontSize: 23 },
     tileTitle: { color: colors.text, fontSize: 14, fontWeight: "700" },
     tileSubtitle: { color: colors.muted, fontSize: 12 },

@@ -13,7 +13,7 @@ Monorepo aplikacji mobilnej cross-platform (iOS i Android) oraz API.
 
 ## Wymagania
 
-- Node.js `>=22.13`
+- Node.js `>=26` (see `.nvmrc`)
 - npm (included with Node.js)
 - Expo Go na telefonie lub symulator iOS / emulator Android
 

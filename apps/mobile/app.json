@@ -9,7 +9,6 @@
     "web": {
       "output": "static"
     },
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.eatable.app"
@@ -18,7 +17,8 @@
       "package": "com.eatable.app"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-status-bar"
     ]
   }
 }

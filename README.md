@@ -24,7 +24,9 @@ npm install
 npm run dev
 ```
 
-Turborepo uruchomi API i Expo równolegle. API nasłuchuje na `http://localhost:3000`, a kontrola zdrowia jest dostępna pod `/health`. Expo pokaże QR kod i adres do otwarcia aplikacji.
+Turborepo starts the API and Expo in parallel. The API listens on port `3000` on all interfaces, with a health check at `/health`. Expo shows a QR code and the address for opening the app.
+
+To test on a physical phone against the API on your computer, connect both to the same Wi-Fi network and scan the QR code in Expo Go. When `EXPO_PUBLIC_API_URL` is not set, a development build sends API requests to the host that serves the Metro bundle (for example `http://192.168.1.20:3000`), so no extra configuration is needed. Set `EXPO_PUBLIC_API_URL` to use another API, such as the test deployment or a tunnel; `expo start --tunnel` needs an explicit URL because the API is not tunneled. If the phone cannot connect, allow incoming connections for Node.js in the macOS firewall.
 
 Run only one service with `npm run dev:api` or `npm run dev:mobile`.
 
@@ -36,7 +38,15 @@ Uruchom API, dwie niezależne bazy PostgreSQL (aplikacji i Open Food Facts) oraz
 docker compose up --build
 ```
 
-The API is available at `http://localhost:3000`, Expo/Metro at port `8081`, the application database at `localhost:5432`, and the Open Food Facts database at `localhost:5433`. Expo/Metro watches the repository mounted as a volume and refreshes the app when files in `apps/mobile` change. Database data is stored separately in the `postgres_data` and `openfoodfacts_data` volumes. The local databases use the development credentials documented in `compose.yaml`.
+To open the app on a physical phone with Expo Go, pass this computer's LAN IP so Metro advertises an address the phone can reach. The app then sends API requests to the API container through the same IP. Read the QR code from `docker compose logs -f mobile`, or open `exp://<LAN IP>:8081` in Expo Go:
+
+```sh
+EXPO_DEV_HOST=$(ipconfig getifaddr en0) docker compose up --build
+```
+
+You can also set `EXPO_DEV_HOST` in `.env`. It defaults to `localhost`, which works for the browser and the iOS Simulator.
+
+The API is available at `http://localhost:3000`, Expo/Metro at port `8081` (web at `http://localhost:8081`), the application database at `localhost:5432`, and the Open Food Facts database at `localhost:5433`. Expo/Metro watches the repository mounted as a volume and refreshes the app when files in `apps/mobile` change. Database data is stored separately in the `postgres_data` and `openfoodfacts_data` volumes. The local databases use the development credentials documented in `compose.yaml`.
 
 Przy pierwszym uruchomieniu API tworzy wymagane tabele uwierzytelniania. Rejestracja i logowanie e-mailem działają od razu. Hasła muszą mieć co najmniej 8 znaków; sesje mobilne są przechowywane w systemowym SecureStore.
 

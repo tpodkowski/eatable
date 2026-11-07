@@ -1,8 +1,7 @@
 import type { CreateMealEntryInput, DailyMealsResponse, MealEntry } from "@eatable/shared";
 import { Platform } from "react-native";
 import { authClient } from "./authClient";
-
-const apiUrl = (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
+import { apiUrl } from "./apiUrl";
 
 async function requestHeaders() {
   const cookie = Platform.OS === "web" ? null : await authClient.getCookie();

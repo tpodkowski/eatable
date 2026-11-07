@@ -11,4 +11,4 @@ RUN npm ci --workspace=@eatable/mobile --workspace=@eatable/shared
 COPY . .
 
 EXPOSE 8081
-CMD ["npm", "run", "web", "--workspace=@eatable/mobile", "--", "--port", "8081"]
+CMD ["npm", "run", "start:go", "--workspace=@eatable/mobile", "--", "--port", "8081"]

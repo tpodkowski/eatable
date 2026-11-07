@@ -46,6 +46,8 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       CLIENT_ORIGINS: ${CLIENT_ORIGINS:-http://localhost:8081}
+      # Local stack only: trusts Expo Go (exp://) origins; the image itself defaults to production.
+      NODE_ENV: development
       HOST: 0.0.0.0
       PORT: 3000
     ports:
@@ -62,7 +64,10 @@ services:
       dockerfile: Dockerfile.mobile
     restart: unless-stopped
     environment:
-      EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost:3000}
+      # Leave empty to send API requests to the same host that serves Metro.
+      EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-}
+      # Address that phones use to reach Metro; set it to this computer's LAN IP.
+      REACT_NATIVE_PACKAGER_HOSTNAME: ${EXPO_DEV_HOST:-localhost}
       EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED: ${EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED:-false}
     ports:
       - "8081:8081"
@@ -71,7 +76,7 @@ services:
       - /app/node_modules
       - /app/apps/mobile/node_modules
       - /app/packages/shared/node_modules
-    command: ["npm", "run", "web", "--workspace=@eatable/mobile", "--", "--port", "8081"]
+    command: ["npm", "run", "start:go", "--workspace=@eatable/mobile", "--", "--port", "8081"]
     depends_on:
       - api
 

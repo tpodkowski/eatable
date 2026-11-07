@@ -30,6 +30,20 @@ To test on a physical phone against the API on your computer, connect both to th
 
 Run only one service with `npm run dev:api` or `npm run dev:mobile`.
 
+### Development build
+
+The mobile app uses [`expo-dev-client`](https://docs.expo.dev/develop/development-builds/introduction/), so `npm run dev` starts Metro for a development build: your own debug version of the app with its native modules and the `eatable://` scheme, which Google SSO needs. Build and install it once, then keep using Metro for live reloads. Rebuild only after native changes, such as a new native library or changes to `app.json` plugins.
+
+1. Link the app to an Expo project once: `cd apps/mobile && npx eas-cli@27 init`. This adds the project ID to `app.json`.
+2. Build the app with EAS (run from `apps/mobile`):
+   - Android phone: `npm run build:dev:android`, then install the APK from the link EAS prints.
+   - iPhone: `npm run build:dev:ios`. This needs a paid Apple Developer account. Register the device first with `npx eas-cli@27 device:create`.
+   - iOS Simulator: `npm run build:dev:ios-simulator`.
+   - Without EAS, build locally with Xcode or Android Studio: `npx expo run:ios --device` or `npx expo run:android`.
+3. Run `npm run dev` on your computer and open the project in the installed app by scanning the QR code or picking the server from the list.
+
+The build profiles live in `apps/mobile/eas.json`. To use Expo Go instead of a development build, run `npm run start:go --workspace=@eatable/mobile`; Docker Compose uses this mode.
+
 ## Start z Dockerem
 
 Uruchom API, dwie niezależne bazy PostgreSQL (aplikacji i Open Food Facts) oraz serwer Expo:
@@ -45,6 +59,8 @@ EXPO_DEV_HOST=$(ipconfig getifaddr en0) docker compose up --build
 ```
 
 You can also set `EXPO_DEV_HOST` in `.env`. It defaults to `localhost`, which works for the browser and the iOS Simulator.
+
+The app belongs to the `tpodkowski` Expo account (`owner` in `app.json`). If Expo Go is signed in to that account, it opens the project only when Expo CLI is signed in too. The mobile container reuses your host login: sign in once with `npx expo login`, then restart the `mobile` service. Compose mounts `~/.expo` read-only and copies `state.json` into the container on start. In environments without a host login, such as CI, set `EXPO_TOKEN` in `.env` to an access token from expo.dev (Account settings → Access tokens).
 
 The API is available at `http://localhost:3000`, Expo/Metro at port `8081` (web at `http://localhost:8081`), the application database at `localhost:5432`, and the Open Food Facts database at `localhost:5433`. Expo/Metro watches the repository mounted as a volume and refreshes the app when files in `apps/mobile` change. Database data is stored separately in the `postgres_data` and `openfoodfacts_data` volumes. The local databases use the development credentials documented in `compose.yaml`.
 
@@ -63,7 +79,7 @@ Open `bruno/eatable` in Bruno and select the `local` environment. Set `sessionCo
 3. W `.env` ustaw `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` oraz `EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED=true`.
 4. Zrestartuj usługi: `docker compose up --build -d`.
 
-Google SSO on iOS and Android requires a native development build because Expo Go does not support a custom OAuth redirect scheme. After installing dependencies, run `npm exec --workspace=@eatable/mobile -- expo run:ios` or `npm exec --workspace=@eatable/mobile -- expo run:android`. On a physical phone, set the API address to one reachable from the device. Use a public HTTPS address (such as a development tunnel) for the Google callback, and set the same address in `BETTER_AUTH_URL` and the Google redirect URI.
+Google SSO on iOS and Android requires a [development build](#development-build) because Expo Go does not support a custom OAuth redirect scheme. On a physical phone, set the API address to one reachable from the device. Use a public HTTPS address (such as a development tunnel) for the Google callback, and set the same address in `BETTER_AUTH_URL` and the Google redirect URI.
 
 Start only the database if you prefer to run the API on the host with `npm run dev:api`:
 

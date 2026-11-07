@@ -19,6 +19,12 @@
     "plugins": [
       "expo-router",
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "522d736a-ede8-4aea-b038-4bec84b34c24"
+      }
+    },
+    "owner": "tpodkowski"
   }
 }

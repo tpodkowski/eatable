@@ -1,0 +1,25 @@
+{
+  "cli": {
+    "version": ">= 27.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "base": {
+      "node": "26.13.0"
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "development-simulator": {
+      "extends": "development",
+      "ios": {
+        "simulator": true
+      }
+    }
+  }
+}

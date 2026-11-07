@@ -68,6 +68,8 @@ services:
       EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-}
       # Address that phones use to reach Metro; set it to this computer's LAN IP.
       REACT_NATIVE_PACKAGER_HOSTNAME: ${EXPO_DEV_HOST:-localhost}
+      # Expo access token so Expo Go signed in to the project owner's account can open the app.
+      EXPO_TOKEN: ${EXPO_TOKEN:-}
       EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED: ${EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED:-false}
     ports:
       - "8081:8081"
@@ -76,7 +78,12 @@ services:
       - /app/node_modules
       - /app/apps/mobile/node_modules
       - /app/packages/shared/node_modules
-    command: ["npm", "run", "start:go", "--workspace=@eatable/mobile", "--", "--port", "8081"]
+      # Reuse the host's Expo CLI login (`npx expo login`), read-only.
+      - ${HOME}/.expo:/root/.expo-host:ro
+    command:
+      - sh
+      - -c
+      - mkdir -p /root/.expo && cp /root/.expo-host/state.json /root/.expo/state.json 2>/dev/null; exec npm run start:go --workspace=@eatable/mobile -- --port 8081
     depends_on:
       - api
 

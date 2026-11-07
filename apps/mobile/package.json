@@ -12,7 +12,10 @@
     "web": "expo start --web",
     "test": "node --experimental-strip-types --test src/theme.test.mjs src/lib/initials.test.mjs src/lib/dates.test.mjs src/lib/resolveApiUrl.test.mjs src/features/meals/mealSchedule.test.mjs src/features/meals/mealEntryFormValidation.test.mjs src/features/meals/getDateStripArrowLayout.test.mjs src/features/settings/profileForm.test.mjs src/features/dashboard/macroProgress.test.mjs src/features/products/filterProducts.test.mjs",
     "build": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:dev:ios": "npx eas-cli@27 build --profile development --platform ios",
+    "build:dev:android": "npx eas-cli@27 build --profile development --platform android",
+    "build:dev:ios-simulator": "npx eas-cli@27 build --profile development-simulator --platform ios"
   },
   "dependencies": {
     "@better-auth/expo": "1.7.18",
@@ -21,6 +24,7 @@
     "better-auth": "1.7.18",
     "expo": "~58.0.23",
     "expo-constants": "~58.0.15",
+    "expo-dev-client": "~58.0.18",
     "expo-linear-gradient": "~58.0.3",
     "expo-linking": "~58.0.16",
     "expo-localization": "~58.0.5",
